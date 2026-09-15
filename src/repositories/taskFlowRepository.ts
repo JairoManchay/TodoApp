@@ -150,7 +150,12 @@ export const taskFlowRepository = {
 
   async deleteActivity(activityId: string) {
     await db.transaction('rw', [db.activities, db.taskStages, db.subtasks, db.notes, db.activityHistory, db.resourceLinks], async () => {
-      await Promise.all([db.activities.delete(activityId), db.taskStages.where('activityId').equals(activityId).delete(), db.subtasks.where('activityId').equals(activityId).delete(), db.notes.where('activityId').equals(activityId).delete(), db.activityHistory.where('activityId').equals(activityId).delete(), db.resourceLinks.where('activityId').equals(activityId).delete()]);
+      await db.subtasks.where('activityId').equals(activityId).delete();
+      await db.taskStages.where('activityId').equals(activityId).delete();
+      await db.notes.where('activityId').equals(activityId).delete();
+      await db.activityHistory.where('activityId').equals(activityId).delete();
+      await db.resourceLinks.where('activityId').equals(activityId).delete();
+      await db.activities.delete(activityId);
     });
   },
 
@@ -166,8 +171,4 @@ export const taskFlowRepository = {
     await db.courses.delete(courseId);
   }
 };
-
-
-
-
 
