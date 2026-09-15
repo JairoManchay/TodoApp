@@ -1,8 +1,8 @@
 import { db } from '../database/db';
-import type { Activity, ActivityDraft, ActivityHistory, Course, Note, Project, Subtask, TaskStage } from '../types/taskflow';
+import type { Activity, ActivityDraft, ActivityHistory, Course, Note, Project, ResourceLink, Settings, Subtask, TaskFlowBackup, TaskStage } from '../types/taskflow';
 import { createId, nowIso } from '../utils/ids';
 
-export interface TaskFlowData { courses: Course[]; projects: Project[]; activities: Activity[]; taskStages: TaskStage[]; subtasks: Subtask[]; notes: Note[]; activityHistory: ActivityHistory[]; }
+export interface TaskFlowData { courses: Course[]; projects: Project[]; activities: Activity[]; taskStages: TaskStage[]; subtasks: Subtask[]; notes: Note[]; activityHistory: ActivityHistory[]; resourceLinks: ResourceLink[]; settings: Settings[]; }
 
 async function findOrCreateCourse(name?: string) {
   if (!name?.trim()) return undefined;
@@ -32,10 +32,10 @@ async function addHistory(activityId: string, type: ActivityHistory['type'], mes
 
 export const taskFlowRepository = {
   async getAll(): Promise<TaskFlowData> {
-    const [courses, projects, activities, taskStages, subtasks, notes, activityHistory] = await Promise.all([
-      db.courses.toArray(), db.projects.toArray(), db.activities.toArray(), db.taskStages.toArray(), db.subtasks.toArray(), db.notes.toArray(), db.activityHistory.toArray()
+    const [courses, projects, activities, taskStages, subtasks, notes, activityHistory, resourceLinks, settings] = await Promise.all([
+      db.courses.toArray(), db.projects.toArray(), db.activities.toArray(), db.taskStages.toArray(), db.subtasks.toArray(), db.notes.toArray(), db.activityHistory.toArray(), db.resourceLinks.toArray(), db.settings.toArray()
     ]);
-    return { courses, projects, activities, taskStages, subtasks, notes, activityHistory };
+    return { courses, projects, activities, taskStages, subtasks, notes, activityHistory, resourceLinks, settings };
   },
 
   async seedIfEmpty() {
@@ -148,9 +148,39 @@ export const taskFlowRepository = {
     await addHistory(activityId, 'review_checked', 'Actualizaste el doble check final');
   },
 
+
+  async restoreBackup(backup: TaskFlowBackup) {
+    await db.transaction('rw', [db.courses, db.projects, db.activities, db.taskStages, db.subtasks, db.notes, db.activityHistory, db.resourceLinks, db.settings], async () => {
+      await Promise.all([
+        db.courses.clear(),
+        db.projects.clear(),
+        db.activities.clear(),
+        db.taskStages.clear(),
+        db.subtasks.clear(),
+        db.notes.clear(),
+        db.activityHistory.clear(),
+        db.resourceLinks.clear(),
+        db.settings.clear()
+      ]);
+      await db.courses.bulkAdd(backup.data.courses);
+      await db.projects.bulkAdd(backup.data.projects);
+      await db.activities.bulkAdd(backup.data.activities);
+      await db.taskStages.bulkAdd(backup.data.taskStages);
+      await db.subtasks.bulkAdd(backup.data.subtasks);
+      await db.notes.bulkAdd(backup.data.notes);
+      await db.activityHistory.bulkAdd(backup.data.activityHistory);
+      await db.resourceLinks.bulkAdd(backup.data.resourceLinks);
+      await db.settings.bulkAdd(backup.data.settings);
+    });
+  },
   async deleteActivity(activityId: string) {
     await db.transaction('rw', [db.activities, db.taskStages, db.subtasks, db.notes, db.activityHistory, db.resourceLinks], async () => {
-      await Promise.all([db.activities.delete(activityId), db.taskStages.where('activityId').equals(activityId).delete(), db.subtasks.where('activityId').equals(activityId).delete(), db.notes.where('activityId').equals(activityId).delete(), db.activityHistory.where('activityId').equals(activityId).delete(), db.resourceLinks.where('activityId').equals(activityId).delete()]);
+      await db.subtasks.where('activityId').equals(activityId).delete();
+      await db.taskStages.where('activityId').equals(activityId).delete();
+      await db.notes.where('activityId').equals(activityId).delete();
+      await db.activityHistory.where('activityId').equals(activityId).delete();
+      await db.resourceLinks.where('activityId').equals(activityId).delete();
+      await db.activities.delete(activityId);
     });
   },
 
@@ -166,8 +196,5 @@ export const taskFlowRepository = {
     await db.courses.delete(courseId);
   }
 };
-
-
-
 
 

@@ -49,11 +49,11 @@ export function AppShell({ children }: AppShellProps) {
 
       <main className="pb-20 lg:ml-64 lg:pb-0">{children}</main>
 
-      <nav className="fixed inset-x-0 bottom-0 grid grid-cols-5 border-t border-slate-200 bg-white px-2 py-2 shadow-sm lg:hidden">
-        {navigationItems.slice(0, 5).map((item) => (
+      <nav className="fixed inset-x-0 bottom-0 grid grid-cols-6 border-t border-slate-200 bg-white px-2 py-2 shadow-sm lg:hidden">
+        {navigationItems.map((item) => (
           <NavLink
             className={({ isActive }) =>
-              `flex flex-col items-center gap-1 rounded-md py-1 text-xs ${isActive ? 'text-teal-800' : 'text-slate-600'}`
+              `flex flex-col items-center gap-1 rounded-md py-1 text-[11px] ${isActive ? 'text-teal-800' : 'text-slate-600'}`
             }
             end={item.to === '/'}
             key={item.label}
@@ -67,3 +67,4 @@ export function AppShell({ children }: AppShellProps) {
     </div>
   );
 }
+
