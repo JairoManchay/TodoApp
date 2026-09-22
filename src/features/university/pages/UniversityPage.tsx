@@ -1,9 +1,11 @@
-import { Trash2 } from 'lucide-react';
+import { Filter, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ConfirmDialog } from '../../../components/common/ConfirmDialog';
 import { ProgressBar } from '../../../components/common/ProgressBar';
 import type { Activity, Course } from '../../../types/taskflow';
+import { emptyAreaFilters, filterActivities, type AreaFilters } from '../../../utils/activityFilters';
+import { formatDateRange } from '../../../utils/format';
 import { useActivityStore } from '../../activities/stores/activityStore';
 
 type DeleteTarget =
@@ -14,6 +16,9 @@ type DeleteTarget =
 export function UniversityPage() {
   const { courses, activities, getProgress, deleteActivity, deleteCourse } = useActivityStore();
   const [deleteTarget, setDeleteTarget] = useState<DeleteTarget>(null);
+  const [showFilters, setShowFilters] = useState(false);
+  const [filters, setFilters] = useState<AreaFilters>(emptyAreaFilters);
+  const filteredActivities = filterActivities(activities.filter((activity) => activity.area === 'university'), filters);
 
   async function confirmDelete() {
     if (!deleteTarget) return;
@@ -39,17 +44,59 @@ export function UniversityPage() {
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
-      <header className="mb-5 flex items-center justify-between">
+      <header className="mb-5 flex items-center justify-between gap-3">
         <div>
           <p className="text-sm font-medium text-teal-700">Universidad</p>
           <h1 className="text-2xl font-semibold">Cursos</h1>
         </div>
-        <Link className="rounded-md bg-teal-700 px-4 py-2 text-sm font-semibold text-white" to="/activities/new">Nueva actividad</Link>
+        <div className="flex gap-2">
+          <button className="inline-flex items-center gap-2 rounded-md border border-slate-200 bg-white px-3 py-2 text-sm font-semibold" onClick={() => setShowFilters((value) => !value)}>
+            <Filter size={16} />
+            Filtros
+          </button>
+          <Link className="rounded-md bg-teal-700 px-4 py-2 text-sm font-semibold text-white" to="/activities/new">Nueva actividad</Link>
+        </div>
       </header>
+
+      {showFilters ? (
+        <section className="mb-4 grid gap-3 rounded-lg border border-slate-200 bg-white p-4 shadow-sm md:grid-cols-5">
+          <input className="h-10 rounded-md border border-slate-200 px-3 text-sm" type="date" value={filters.startDate} onChange={(event) => setFilters({ ...filters, startDate: event.target.value })} />
+          <input className="h-10 rounded-md border border-slate-200 px-3 text-sm" type="date" value={filters.endDate} onChange={(event) => setFilters({ ...filters, endDate: event.target.value })} />
+          <select className="h-10 rounded-md border border-slate-200 px-3 text-sm" value={filters.type} onChange={(event) => setFilters({ ...filters, type: event.target.value as AreaFilters['type'] })}>
+            <option value="all">Todos los tipos</option>
+            <option value="exam">Examen</option>
+            <option value="graded_practice">Practica calificada</option>
+            <option value="pc">PC</option>
+            <option value="presentation">Exposicion</option>
+            <option value="homework">Tarea</option>
+            <option value="project">Proyecto</option>
+            <option value="lab">Laboratorio</option>
+            <option value="report">Informe</option>
+            <option value="delivery">Entrega</option>
+            <option value="reading">Lectura</option>
+            <option value="other">Otro</option>
+          </select>
+          <select className="h-10 rounded-md border border-slate-200 px-3 text-sm" value={filters.priority} onChange={(event) => setFilters({ ...filters, priority: event.target.value as AreaFilters['priority'] })}>
+            <option value="all">Toda prioridad</option>
+            <option value="urgent">Urgente</option>
+            <option value="high">Alta</option>
+            <option value="medium">Media</option>
+            <option value="low">Baja</option>
+          </select>
+          <select className="h-10 rounded-md border border-slate-200 px-3 text-sm" value={filters.status} onChange={(event) => setFilters({ ...filters, status: event.target.value as AreaFilters['status'] })}>
+            <option value="all">Todo estado</option>
+            <option value="pending">Pendiente</option>
+            <option value="in_progress">En proceso</option>
+            <option value="review">Por revisar</option>
+            <option value="completed">Finalizada</option>
+            <option value="archived">Archivada</option>
+          </select>
+        </section>
+      ) : null}
 
       <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
         {courses.map((course) => {
-          const courseActivities = activities.filter((activity) => activity.courseId === course.id);
+          const courseActivities = filteredActivities.filter((activity) => activity.courseId === course.id);
           const completed = courseActivities.filter((activity) => activity.status === 'completed').length;
 
           return (
@@ -59,7 +106,7 @@ export function UniversityPage() {
                   <h2 className="font-semibold">{course.name}</h2>
                   <p className="mt-1 text-sm text-slate-500">{courseActivities.length} actividades - {completed} completadas</p>
                 </div>
-                <button className="rounded-md border border-red-200 p-2 text-red-600" onClick={() => setDeleteTarget({ type: 'course', course, activityCount: courseActivities.length })} title="Eliminar curso">
+                <button className="rounded-md border border-red-200 p-2 text-red-600" onClick={() => setDeleteTarget({ type: 'course', course, activityCount: activities.filter((activity) => activity.courseId === course.id).length })} title="Eliminar curso">
                   <Trash2 size={16} />
                 </button>
               </div>
@@ -75,6 +122,7 @@ export function UniversityPage() {
                           <Trash2 size={15} />
                         </button>
                       </div>
+                      <p className="mt-1 text-xs text-slate-500">{formatDateRange(activity.startDate, activity.dueDate)}</p>
                       <div className="mt-2"><ProgressBar completed={progress.completedSubtasks} total={progress.totalSubtasks} percentage={progress.percentage} /></div>
                     </div>
                   );

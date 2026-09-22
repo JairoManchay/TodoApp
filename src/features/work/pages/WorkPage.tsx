@@ -1,100 +1,25 @@
-import { Trash2 } from 'lucide-react';
+import { Filter, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ConfirmDialog } from '../../../components/common/ConfirmDialog';
 import { ProgressBar } from '../../../components/common/ProgressBar';
 import type { Activity, Project } from '../../../types/taskflow';
+import { emptyAreaFilters, filterActivities, type AreaFilters } from '../../../utils/activityFilters';
+import { formatDateRange } from '../../../utils/format';
 import { useActivityStore } from '../../activities/stores/activityStore';
 
-type DeleteTarget =
-  | { type: 'activity'; activity: Activity }
-  | { type: 'project'; project: Project; taskCount: number }
-  | null;
+type DeleteTarget = { type: 'activity'; activity: Activity } | { type: 'project'; project: Project; taskCount: number } | null;
 
 export function WorkPage() {
   const { projects, activities, getProgress, deleteActivity, deleteProject } = useActivityStore();
   const [deleteTarget, setDeleteTarget] = useState<DeleteTarget>(null);
+  const [showFilters, setShowFilters] = useState(false);
+  const [filters, setFilters] = useState<AreaFilters>(emptyAreaFilters);
+  const filteredActivities = filterActivities(activities.filter((activity) => activity.area === 'work'), filters);
 
-  async function confirmDelete() {
-    if (!deleteTarget) return;
-
-    if (deleteTarget.type === 'activity') {
-      await deleteActivity(deleteTarget.activity.id);
-      setDeleteTarget(null);
-      return;
-    }
-
-    if (deleteTarget.taskCount > 0) return;
-    await deleteProject(deleteTarget.project.id);
-    setDeleteTarget(null);
-  }
-
+  async function confirmDelete() { if (!deleteTarget) return; if (deleteTarget.type === 'activity') { await deleteActivity(deleteTarget.activity.id); setDeleteTarget(null); return; } if (deleteTarget.taskCount > 0) return; await deleteProject(deleteTarget.project.id); setDeleteTarget(null); }
   const dialogTitle = deleteTarget?.type === 'activity' ? 'Eliminar tarea' : 'Eliminar proyecto';
-  const dialogDescription =
-    deleteTarget?.type === 'activity'
-      ? `Se eliminara "${deleteTarget.activity.title}" junto con sus etapas, subtareas, notas e historial.`
-      : deleteTarget?.taskCount
-        ? 'Primero elimina las tareas asociadas. Asi evitamos borrar trabajo importante por accidente.'
-        : `Se eliminara el proyecto "${deleteTarget?.project.name}".`;
+  const dialogDescription = deleteTarget?.type === 'activity' ? `Se eliminara "${deleteTarget.activity.title}" junto con sus etapas, subtareas, notas e historial.` : deleteTarget?.taskCount ? 'Primero elimina las tareas asociadas. Asi evitamos borrar trabajo importante por accidente.' : `Se eliminara el proyecto "${deleteTarget?.project.name}".`;
 
-  return (
-    <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
-      <header className="mb-5 flex items-center justify-between">
-        <div>
-          <p className="text-sm font-medium text-teal-700">Trabajo</p>
-          <h1 className="text-2xl font-semibold">Proyectos</h1>
-        </div>
-        <Link className="rounded-md bg-teal-700 px-4 py-2 text-sm font-semibold text-white" to="/activities/new">Nueva tarea</Link>
-      </header>
-
-      <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-        {projects.map((project) => {
-          const projectActivities = activities.filter((activity) => activity.projectId === project.id);
-          const inProgress = projectActivities.filter((activity) => activity.status === 'in_progress').length;
-
-          return (
-            <article className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm" key={project.id}>
-              <div className="flex items-start justify-between gap-3">
-                <div>
-                  <h2 className="font-semibold">{project.name}</h2>
-                  <p className="mt-1 text-sm text-slate-500">{projectActivities.length} tareas - {inProgress} en proceso</p>
-                </div>
-                <button className="rounded-md border border-red-200 p-2 text-red-600" onClick={() => setDeleteTarget({ type: 'project', project, taskCount: projectActivities.length })} title="Eliminar proyecto">
-                  <Trash2 size={16} />
-                </button>
-              </div>
-
-              <div className="mt-4 space-y-2">
-                {projectActivities.map((activity) => {
-                  const progress = getProgress(activity.id);
-                  return (
-                    <div className="rounded-md bg-slate-50 p-3 text-sm" key={activity.id}>
-                      <div className="flex items-start justify-between gap-3">
-                        <Link className="font-semibold text-slate-950 hover:text-teal-700" to={`/activities/${activity.id}`}>{activity.title}</Link>
-                        <button className="rounded-md border border-red-200 p-1 text-red-600" onClick={() => setDeleteTarget({ type: 'activity', activity })} title="Eliminar tarea">
-                          <Trash2 size={15} />
-                        </button>
-                      </div>
-                      <div className="mt-2"><ProgressBar completed={progress.completedSubtasks} total={progress.totalSubtasks} percentage={progress.percentage} /></div>
-                    </div>
-                  );
-                })}
-                {projectActivities.length === 0 ? <p className="rounded-md border border-dashed border-slate-300 p-3 text-sm text-slate-500">Falta construir tu primera Tarea</p> : null}
-              </div>
-            </article>
-          );
-        })}
-        {projects.length === 0 ? <p className="text-sm text-slate-500">Falta construir tu primera Tarea</p> : null}
-      </section>
-
-      <ConfirmDialog
-        confirmLabel={deleteTarget?.type === 'project' && deleteTarget.taskCount > 0 ? 'Entendido' : 'Eliminar'}
-        description={dialogDescription}
-        isOpen={deleteTarget !== null}
-        onCancel={() => setDeleteTarget(null)}
-        onConfirm={deleteTarget?.type === 'project' && deleteTarget.taskCount > 0 ? () => setDeleteTarget(null) : confirmDelete}
-        title={dialogTitle}
-      />
-    </div>
-  );
+  return <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8"><header className="mb-5 flex items-center justify-between gap-3"><div><p className="text-sm font-medium text-teal-700">Trabajo</p><h1 className="text-2xl font-semibold">Proyectos</h1></div><div className="flex gap-2"><button className="inline-flex items-center gap-2 rounded-md border border-slate-200 bg-white px-3 py-2 text-sm font-semibold" onClick={() => setShowFilters((value) => !value)}><Filter size={16} />Filtros</button><Link className="rounded-md bg-teal-700 px-4 py-2 text-sm font-semibold text-white" to="/activities/new">Nueva tarea</Link></div></header>{showFilters ? <section className="mb-4 grid gap-3 rounded-lg border border-slate-200 bg-white p-4 shadow-sm md:grid-cols-5"><input className="h-10 rounded-md border border-slate-200 px-3 text-sm" type="date" value={filters.startDate} onChange={(event) => setFilters({ ...filters, startDate: event.target.value })} /><input className="h-10 rounded-md border border-slate-200 px-3 text-sm" type="date" value={filters.endDate} onChange={(event) => setFilters({ ...filters, endDate: event.target.value })} /><select className="h-10 rounded-md border border-slate-200 px-3 text-sm" value={filters.type} onChange={(event) => setFilters({ ...filters, type: event.target.value as AreaFilters['type'] })}><option value="all">Todos los tipos</option><option value="feature">Funcionalidad</option><option value="bugfix">Correccion</option><option value="documentation">Documentacion</option><option value="meeting">Reunion</option><option value="other">Otro</option></select><select className="h-10 rounded-md border border-slate-200 px-3 text-sm" value={filters.priority} onChange={(event) => setFilters({ ...filters, priority: event.target.value as AreaFilters['priority'] })}><option value="all">Toda prioridad</option><option value="urgent">Urgente</option><option value="high">Alta</option><option value="medium">Media</option><option value="low">Baja</option></select><select className="h-10 rounded-md border border-slate-200 px-3 text-sm" value={filters.status} onChange={(event) => setFilters({ ...filters, status: event.target.value as AreaFilters['status'] })}><option value="all">Todo estado</option><option value="pending">Pendiente</option><option value="in_progress">En proceso</option><option value="review">Por revisar</option><option value="completed">Finalizada</option><option value="archived">Archivada</option></select></section> : null}<section className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">{projects.map((project) => { const projectActivities = filteredActivities.filter((activity) => activity.projectId === project.id); const inProgress = projectActivities.filter((activity) => activity.status === 'in_progress').length; return <article className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm" key={project.id}><div className="flex items-start justify-between gap-3"><div><h2 className="font-semibold">{project.name}</h2><p className="mt-1 text-sm text-slate-500">{projectActivities.length} tareas - {inProgress} en proceso</p></div><button className="rounded-md border border-red-200 p-2 text-red-600" onClick={() => setDeleteTarget({ type: 'project', project, taskCount: activities.filter((activity) => activity.projectId === project.id).length })} title="Eliminar proyecto"><Trash2 size={16} /></button></div><div className="mt-4 space-y-2">{projectActivities.map((activity) => { const progress = getProgress(activity.id); return <div className="rounded-md bg-slate-50 p-3 text-sm" key={activity.id}><div className="flex items-start justify-between gap-3"><Link className="font-semibold text-slate-950 hover:text-teal-700" to={`/activities/${activity.id}`}>{activity.title}</Link><button className="rounded-md border border-red-200 p-1 text-red-600" onClick={() => setDeleteTarget({ type: 'activity', activity })} title="Eliminar tarea"><Trash2 size={15} /></button></div><p className="mt-1 text-xs text-slate-500">{formatDateRange(activity.startDate, activity.dueDate)}</p><div className="mt-2"><ProgressBar completed={progress.completedSubtasks} total={progress.totalSubtasks} percentage={progress.percentage} /></div></div>; })}{projectActivities.length === 0 ? <p className="rounded-md border border-dashed border-slate-300 p-3 text-sm text-slate-500">Falta construir tu primera Tarea</p> : null}</div></article>; })}{projects.length === 0 ? <p className="text-sm text-slate-500">Falta construir tu primera Tarea</p> : null}</section><ConfirmDialog confirmLabel={deleteTarget?.type === 'project' && deleteTarget.taskCount > 0 ? 'Entendido' : 'Eliminar'} description={dialogDescription} isOpen={deleteTarget !== null} onCancel={() => setDeleteTarget(null)} onConfirm={deleteTarget?.type === 'project' && deleteTarget.taskCount > 0 ? () => setDeleteTarget(null) : confirmDelete} title={dialogTitle} /></div>;
 }
