@@ -3,7 +3,7 @@ import { Plus, Search } from 'lucide-react';
 import { AreaBadge, PriorityBadge, StatusBadge } from '../../../components/common/Badges';
 import { ProgressBar } from '../../../components/common/ProgressBar';
 import { useActivityStore } from '../stores/activityStore';
-import { formatDate } from '../../../utils/format';
+import { formatDateRange } from '../../../utils/format';
 
 export function ActivitiesPage() {
   const { activities, filters, setFilters, getProgress, isLoading } = useActivityStore();
@@ -32,7 +32,7 @@ export function ActivitiesPage() {
         {filtered.map((activity) => {
           const progress = getProgress(activity.id);
           return <Link className="block rounded-lg border border-slate-200 bg-white p-4 shadow-sm transition hover:border-teal-200 hover:shadow-md" key={activity.id} to={`/activities/${activity.id}`}>
-            <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between"><div><h2 className="font-semibold text-slate-950">{activity.title}</h2><p className="mt-1 text-sm text-slate-500">Fecha: {formatDate(activity.dueDate)}</p></div><div className="flex flex-wrap gap-2"><AreaBadge area={activity.area} /><PriorityBadge priority={activity.priority} /><StatusBadge status={activity.status} /></div></div>
+            <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between"><div><h2 className="font-semibold text-slate-950">{activity.title}</h2><p className="mt-1 text-sm text-slate-500">Fecha: {formatDateRange(activity.startDate, activity.dueDate)}</p></div><div className="flex flex-wrap gap-2"><AreaBadge area={activity.area} /><PriorityBadge priority={activity.priority} /><StatusBadge status={activity.status} /></div></div>
             <div className="mt-4"><ProgressBar completed={progress.completedSubtasks} total={progress.totalSubtasks} percentage={progress.percentage} /></div>
           </Link>;
         })}
@@ -41,4 +41,6 @@ export function ActivitiesPage() {
     </div>
   );
 }
+
+
 

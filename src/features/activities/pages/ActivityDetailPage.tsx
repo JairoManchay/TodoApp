@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { AreaBadge, PriorityBadge, StatusBadge } from '../../../components/common/Badges';
 import { ProgressBar } from '../../../components/common/ProgressBar';
-import { formatDate } from '../../../utils/format';
+import { formatDateRange } from '../../../utils/format';
 import { useActivityStore } from '../stores/activityStore';
 
 export function ActivityDetailPage() {
@@ -62,7 +62,7 @@ export function ActivityDetailPage() {
           <div>
             <p className="text-sm font-medium text-teal-700">Detalle de actividad</p>
             <h1 className="mt-1 text-2xl font-semibold text-slate-950">{selectedActivity.title}</h1>
-            <p className="mt-2 text-sm text-slate-500">Fecha: {formatDate(selectedActivity.dueDate)}</p>
+            <p className="mt-2 text-sm text-slate-500">Fecha: {formatDateRange(selectedActivity.startDate, selectedActivity.dueDate)}</p>
           </div>
           <div className="flex flex-wrap gap-2"><AreaBadge area={selectedActivity.area} /><PriorityBadge priority={selectedActivity.priority} /><StatusBadge status={selectedActivity.status} /></div>
         </div>
@@ -129,4 +129,6 @@ export function ActivityDetailPage() {
     </div>
   );
 }
+
+
 

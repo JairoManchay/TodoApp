@@ -22,3 +22,22 @@ export function isWithinNextDays(value: string | undefined, days: number) {
   const diff = target.getTime() - today.getTime();
   return diff >= 0 && diff <= days * 24 * 60 * 60 * 1000;
 }
+
+export function formatDateRange(startDate?: string, dueDate?: string) {
+  if (!startDate && !dueDate) return 'Sin fecha';
+  if (startDate && dueDate) return `${formatDate(startDate)} - ${formatDate(dueDate)}`;
+  if (startDate) return `Desde ${formatDate(startDate)}`;
+  return `Hasta ${formatDate(dueDate)}`;
+}
+
+export function activityOverlapsRange(activityStart?: string, activityEnd?: string, filterStart?: string, filterEnd?: string) {
+  if (!filterStart && !filterEnd) return true;
+  const start = activityStart || activityEnd;
+  const end = activityEnd || activityStart;
+  if (!start && !end) return false;
+  const normalizedStart = start ?? end;
+  const normalizedEnd = end ?? start;
+  if (filterStart && normalizedEnd && normalizedEnd < filterStart) return false;
+  if (filterEnd && normalizedStart && normalizedStart > filterEnd) return false;
+  return true;
+}

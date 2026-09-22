@@ -15,7 +15,8 @@ export interface ActivityHistory { id: string; activityId: string; type: History
 export interface ResourceLink { id: string; activityId: string; name: string; url?: string; description?: string; createdAt: string; updatedAt: string; }
 export interface Settings { id: 'app-settings'; userName: string; theme: 'light' | 'dark' | 'system'; autoMoveToReview: boolean; defaultArea: AreaType; createdAt: string; updatedAt: string; }
 export interface ActivityProgress { totalSubtasks: number; completedSubtasks: number; percentage: number; label: string; }
-export interface ActivityDraft { title: string; description?: string; area: AreaType; type: ActivityType; courseName?: string; projectName?: string; personalCategory?: string; priority: ActivityPriority; dueDate?: string; stages: Array<{ title: string; subtasks: string[] }>; }
+export interface ActivityDraft { title: string; description?: string; area: AreaType; type: ActivityType; courseName?: string; projectName?: string; personalCategory?: string; priority: ActivityPriority; startDate?: string; dueDate?: string; stages: Array<{ title: string; subtasks: string[] }>; }
 export interface TaskFlowBackup { appName: 'TaskFlow'; schemaVersion: 1; exportedAt: string; data: { courses: Course[]; projects: Project[]; activities: Activity[]; taskStages: TaskStage[]; subtasks: Subtask[]; notes: Note[]; activityHistory: ActivityHistory[]; resourceLinks: ResourceLink[]; settings: Settings[]; }; }
+
 
 
