@@ -1,4 +1,4 @@
-﻿import { BriefcaseBusiness, CalendarDays, CheckCircle2, GraduationCap, Home, Layers3, MoreHorizontal, Settings, UserRound } from 'lucide-react';
+import { BriefcaseBusiness, CalendarDays, CheckCircle2, GraduationCap, Home, Layers3, MoreHorizontal, Settings, UserRound } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { useState } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
@@ -31,6 +31,7 @@ interface AppShellProps {
 type MobileMenu = 'areas' | 'more' | null;
 
 export function AppShell({ children }: AppShellProps) {
+  const appVersion = __APP_VERSION__;
   const [openMenu, setOpenMenu] = useState<MobileMenu>(null);
   const location = useLocation();
   const isAreaActive = areaItems.some((item) => location.pathname.startsWith(item.to));
@@ -65,6 +66,9 @@ export function AppShell({ children }: AppShellProps) {
             </NavLink>
           ))}
         </nav>
+        <div className="absolute inset-x-4 bottom-5 rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-500">
+          Version {appVersion}
+        </div>
       </aside>
 
       <main className="pb-20 lg:ml-64 lg:pb-0">{children}</main>
@@ -88,6 +92,7 @@ export function AppShell({ children }: AppShellProps) {
               {item.label}
             </NavLink>
           ))}
+          {openMenu === 'more' ? <p className="border-t border-slate-100 px-3 py-2 text-xs text-slate-500">Version {appVersion}</p> : null}
         </div>
       ) : null}
 
@@ -113,5 +118,3 @@ export function AppShell({ children }: AppShellProps) {
     </div>
   );
 }
-
-
