@@ -50,7 +50,8 @@ export function ActivityFormPage() {
   const navigate = useNavigate();
   const createActivity = useActivityStore((state) => state.createActivity);
   const [draft, setDraft] = useState<ActivityDraft>({ title: '', description: '', area: 'work', type: 'feature', projectName: '', courseName: '', personalCategory: '', priority: 'medium', startDate: '', dueDate: '', stages: [defaultStage] });
-  const hasInvalidDateRange = Boolean(draft.startDate && draft.dueDate && draft.dueDate < draft.startDate);
+  const [extendDueDate, setExtendDueDate] = useState(false);
+  const hasInvalidDateRange = Boolean(extendDueDate && draft.startDate && draft.dueDate && draft.dueDate < draft.startDate);
 
   function updateArea(area: AreaType) {
     setDraft((current) => ({ ...current, area, type: defaultTypeForArea(area) }));
@@ -65,7 +66,7 @@ export function ActivityFormPage() {
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
     if (!draft.title.trim() || hasInvalidDateRange) return;
-    const activityId = await createActivity({ ...draft, stages: draft.stages.map((stage) => ({ ...stage, subtasks: stage.subtasks.filter(Boolean) })).filter((stage) => stage.title.trim()) });
+    const activityId = await createActivity({ ...draft, dueDate: extendDueDate ? draft.dueDate : undefined, stages: draft.stages.map((stage) => ({ ...stage, subtasks: stage.subtasks.filter(Boolean) })).filter((stage) => stage.title.trim()) });
     navigate(`/activities/${activityId}`);
   }
 
@@ -81,7 +82,10 @@ export function ActivityFormPage() {
 
         <label><span className="text-sm font-medium">Prioridad</span><select className="mt-1 h-10 w-full rounded-md border border-slate-200 px-3 text-sm" value={draft.priority} onChange={(event) => setDraft({ ...draft, priority: event.target.value as ActivityDraft['priority'] })}><option value="low">Baja</option><option value="medium">Media</option><option value="high">Alta</option><option value="urgent">Urgente</option></select></label>
         <label><span className="text-sm font-medium">Fecha inicio</span><input className="mt-1 h-10 w-full rounded-md border border-slate-200 px-3 text-sm" type="date" value={draft.startDate} onChange={(event) => setDraft({ ...draft, startDate: event.target.value })} /></label>
-        <label><span className="text-sm font-medium">Fecha fin</span><input className="mt-1 h-10 w-full rounded-md border border-slate-200 px-3 text-sm" type="date" min={draft.startDate || undefined} value={draft.dueDate} onChange={(event) => setDraft({ ...draft, dueDate: event.target.value })} /></label>
+        <div>
+          <label className="flex items-center gap-2 text-sm font-medium"><input type="checkbox" checked={extendDueDate} onChange={(event) => { setExtendDueDate(event.target.checked); if (!event.target.checked) setDraft({ ...draft, dueDate: '' }); }} />Deseo extender fecha</label>
+          <input className="mt-2 h-10 w-full rounded-md border border-slate-200 px-3 text-sm disabled:bg-slate-100 disabled:text-slate-400" disabled={!extendDueDate} type="date" min={draft.startDate || undefined} value={draft.dueDate} onChange={(event) => setDraft({ ...draft, dueDate: event.target.value })} />
+        </div>
         {hasInvalidDateRange ? <p className="text-sm text-red-600 md:col-span-2">La fecha fin debe ser igual o posterior a la fecha inicio.</p> : null}
         {draft.area === 'work' ? <label className="md:col-span-2"><span className="text-sm font-medium">Proyecto de trabajo</span><input className="mt-1 h-10 w-full rounded-md border border-slate-200 px-3 text-sm" placeholder="Ej. IPS - Orquestador de pagos" value={draft.projectName} onChange={(event) => setDraft({ ...draft, projectName: event.target.value })} /></label> : null}
         {draft.area === 'university' ? <label className="md:col-span-2"><span className="text-sm font-medium">Curso</span><input className="mt-1 h-10 w-full rounded-md border border-slate-200 px-3 text-sm" placeholder="Ej. Inmunologia" value={draft.courseName} onChange={(event) => setDraft({ ...draft, courseName: event.target.value })} /></label> : null}

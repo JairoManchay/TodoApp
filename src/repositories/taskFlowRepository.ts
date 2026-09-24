@@ -77,6 +77,10 @@ export const taskFlowRepository = {
     await addHistory(activityId, status === 'completed' ? 'completed' : status === 'review' ? 'moved_to_review' : 'started', `Estado cambiado a ${status}`);
   },
 
+  async updateDueDate(activityId: string, dueDate?: string) {
+    await db.activities.update(activityId, { dueDate: dueDate || undefined, updatedAt: nowIso() });
+    await addHistory(activityId, 'started', dueDate ? `Extendiste la fecha fin hasta ${dueDate}` : 'Quitaste la fecha fin');
+  },
   async toggleSubtask(subtask: Subtask) {
     const isCompleted = !subtask.isCompleted;
     await db.subtasks.update(subtask.id, { isCompleted, completedAt: isCompleted ? nowIso() : undefined, updatedAt: nowIso() });
@@ -196,6 +200,3 @@ export const taskFlowRepository = {
     await db.courses.delete(courseId);
   }
 };
-
-
-
