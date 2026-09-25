@@ -49,7 +49,9 @@ function defaultTypeForArea(area: AreaType): ActivityType {
 export function ActivityFormPage() {
   const navigate = useNavigate();
   const createActivity = useActivityStore((state) => state.createActivity);
-  const [draft, setDraft] = useState<ActivityDraft>({ title: '', description: '', area: 'work', type: 'feature', projectName: '', courseName: '', personalCategory: '', priority: 'medium', dueDate: '', stages: [defaultStage] });
+  const [draft, setDraft] = useState<ActivityDraft>({ title: '', description: '', area: 'work', type: 'feature', projectName: '', courseName: '', personalCategory: '', priority: 'medium', startDate: '', dueDate: '', stages: [defaultStage] });
+  const [extendDueDate, setExtendDueDate] = useState(false);
+  const hasInvalidDateRange = Boolean(extendDueDate && draft.startDate && draft.dueDate && draft.dueDate < draft.startDate);
 
   function updateArea(area: AreaType) {
     setDraft((current) => ({ ...current, area, type: defaultTypeForArea(area) }));
@@ -63,8 +65,8 @@ export function ActivityFormPage() {
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
-    if (!draft.title.trim()) return;
-    const activityId = await createActivity({ ...draft, stages: draft.stages.map((stage) => ({ ...stage, subtasks: stage.subtasks.filter(Boolean) })).filter((stage) => stage.title.trim()) });
+    if (!draft.title.trim() || hasInvalidDateRange) return;
+    const activityId = await createActivity({ ...draft, dueDate: extendDueDate ? draft.dueDate : undefined, stages: draft.stages.map((stage) => ({ ...stage, subtasks: stage.subtasks.filter(Boolean) })).filter((stage) => stage.title.trim()) });
     navigate(`/activities/${activityId}`);
   }
 
@@ -74,41 +76,24 @@ export function ActivityFormPage() {
       <section className="grid gap-4 rounded-lg border border-slate-200 bg-white p-4 shadow-sm md:grid-cols-2">
         <label className="md:col-span-2"><span className="text-sm font-medium">Titulo</span><input required className="mt-1 h-10 w-full rounded-md border border-slate-200 px-3 text-sm" value={draft.title} onChange={(event) => setDraft({ ...draft, title: event.target.value })} /></label>
 
-        <fieldset className="md:col-span-2">
-          <legend className="text-sm font-medium">Area</legend>
-          <div className="mt-2 grid gap-2 sm:grid-cols-3">
-            {areaOptions.map((option) => (
-              <button className={`flex items-center gap-3 rounded-md border px-3 py-3 text-left text-sm font-medium ${draft.area === option.value ? 'border-teal-600 bg-teal-50 text-teal-800' : 'border-slate-200 bg-white text-slate-600'}`} key={option.value} type="button" onClick={() => updateArea(option.value)}>
-                <option.icon size={18} />
-                {option.label}
-              </button>
-            ))}
-          </div>
-        </fieldset>
+        <fieldset className="md:col-span-2"><legend className="text-sm font-medium">Area</legend><div className="mt-2 grid gap-2 sm:grid-cols-3">{areaOptions.map((option) => <button className={`flex items-center gap-3 rounded-md border px-3 py-3 text-left text-sm font-medium ${draft.area === option.value ? 'border-teal-600 bg-teal-50 text-teal-800' : 'border-slate-200 bg-white text-slate-600'}`} key={option.value} type="button" onClick={() => updateArea(option.value)}><option.icon size={18} />{option.label}</button>)}</div></fieldset>
 
-        <fieldset className="md:col-span-2">
-          <legend className="text-sm font-medium">Tipo de actividad</legend>
-          <div className="mt-2 flex flex-wrap gap-2">
-            {typeOptions[draft.area].map((option) => (
-              <button className={`rounded-md border px-3 py-2 text-sm font-medium ${draft.type === option.value ? 'border-teal-600 bg-teal-50 text-teal-800' : 'border-slate-200 bg-white text-slate-600'}`} key={option.value} type="button" onClick={() => setDraft({ ...draft, type: option.value })}>
-                {option.label}
-              </button>
-            ))}
-          </div>
-        </fieldset>
+        <fieldset className="md:col-span-2"><legend className="text-sm font-medium">Tipo de actividad</legend><div className="mt-2 flex flex-wrap gap-2">{typeOptions[draft.area].map((option) => <button className={`rounded-md border px-3 py-2 text-sm font-medium ${draft.type === option.value ? 'border-teal-600 bg-teal-50 text-teal-800' : 'border-slate-200 bg-white text-slate-600'}`} key={option.value} type="button" onClick={() => setDraft({ ...draft, type: option.value })}>{option.label}</button>)}</div></fieldset>
 
         <label><span className="text-sm font-medium">Prioridad</span><select className="mt-1 h-10 w-full rounded-md border border-slate-200 px-3 text-sm" value={draft.priority} onChange={(event) => setDraft({ ...draft, priority: event.target.value as ActivityDraft['priority'] })}><option value="low">Baja</option><option value="medium">Media</option><option value="high">Alta</option><option value="urgent">Urgente</option></select></label>
-        <label><span className="text-sm font-medium">Fecha</span><input className="mt-1 h-10 w-full rounded-md border border-slate-200 px-3 text-sm" type="date" value={draft.dueDate} onChange={(event) => setDraft({ ...draft, dueDate: event.target.value })} /></label>
+        <label><span className="text-sm font-medium">Fecha inicio</span><input className="mt-1 h-10 w-full rounded-md border border-slate-200 px-3 text-sm" type="date" value={draft.startDate} onChange={(event) => setDraft({ ...draft, startDate: event.target.value })} /></label>
+        <div>
+          <label className="flex items-center gap-2 text-sm font-medium"><input type="checkbox" checked={extendDueDate} onChange={(event) => { setExtendDueDate(event.target.checked); if (!event.target.checked) setDraft({ ...draft, dueDate: '' }); }} />Deseo extender fecha</label>
+          <input className="mt-2 h-10 w-full rounded-md border border-slate-200 px-3 text-sm disabled:bg-slate-100 disabled:text-slate-400" disabled={!extendDueDate} type="date" min={draft.startDate || undefined} value={draft.dueDate} onChange={(event) => setDraft({ ...draft, dueDate: event.target.value })} />
+        </div>
+        {hasInvalidDateRange ? <p className="text-sm text-red-600 md:col-span-2">La fecha fin debe ser igual o posterior a la fecha inicio.</p> : null}
         {draft.area === 'work' ? <label className="md:col-span-2"><span className="text-sm font-medium">Proyecto de trabajo</span><input className="mt-1 h-10 w-full rounded-md border border-slate-200 px-3 text-sm" placeholder="Ej. IPS - Orquestador de pagos" value={draft.projectName} onChange={(event) => setDraft({ ...draft, projectName: event.target.value })} /></label> : null}
         {draft.area === 'university' ? <label className="md:col-span-2"><span className="text-sm font-medium">Curso</span><input className="mt-1 h-10 w-full rounded-md border border-slate-200 px-3 text-sm" placeholder="Ej. Inmunologia" value={draft.courseName} onChange={(event) => setDraft({ ...draft, courseName: event.target.value })} /></label> : null}
         {draft.area === 'personal' ? <label className="md:col-span-2"><span className="text-sm font-medium">Categoria personal</span><input className="mt-1 h-10 w-full rounded-md border border-slate-200 px-3 text-sm" placeholder="Ej. Salud, pagos, tramites" value={draft.personalCategory} onChange={(event) => setDraft({ ...draft, personalCategory: event.target.value })} /></label> : null}
         <label className="md:col-span-2"><span className="text-sm font-medium">Descripcion</span><textarea className="mt-1 min-h-24 w-full rounded-md border border-slate-200 px-3 py-2 text-sm" value={draft.description} onChange={(event) => setDraft({ ...draft, description: event.target.value })} /></label>
       </section>
-      <section className="space-y-3">
-        <div className="flex items-center justify-between"><h2 className="font-semibold">Etapas y subtareas</h2><button className="inline-flex h-9 items-center gap-2 rounded-md border border-slate-200 bg-white px-3 text-sm font-medium" type="button" onClick={addStage}><Plus size={16} />Etapa</button></div>
-        {draft.stages.map((stage, stageIndex) => <article className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm" key={stageIndex}><div className="flex gap-2"><input className="h-10 flex-1 rounded-md border border-slate-200 px-3 text-sm font-medium" placeholder="Nombre de etapa" value={stage.title} onChange={(event) => updateStage(stageIndex, event.target.value)} /><button className="h-10 w-10 rounded-md border border-slate-200 text-slate-500" type="button" onClick={() => removeStage(stageIndex)}><Trash2 className="mx-auto" size={16} /></button></div><div className="mt-3 space-y-2">{stage.subtasks.map((subtask, subtaskIndex) => <input className="h-10 w-full rounded-md border border-slate-200 px-3 text-sm" key={subtaskIndex} placeholder="Subtarea" value={subtask} onChange={(event) => updateSubtask(stageIndex, subtaskIndex, event.target.value)} />)}<button className="text-sm font-medium text-teal-700" type="button" onClick={() => addSubtask(stageIndex)}>Agregar subtarea</button></div></article>)}
-      </section>
-      <div className="flex justify-end"><button className="h-11 rounded-md bg-teal-700 px-5 text-sm font-semibold text-white" type="submit">Crear actividad</button></div>
+      <section className="space-y-3"><div className="flex items-center justify-between"><h2 className="font-semibold">Etapas y subtareas</h2><button className="inline-flex h-9 items-center gap-2 rounded-md border border-slate-200 bg-white px-3 text-sm font-medium" type="button" onClick={addStage}><Plus size={16} />Etapa</button></div>{draft.stages.map((stage, stageIndex) => <article className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm" key={stageIndex}><div className="flex gap-2"><input className="h-10 flex-1 rounded-md border border-slate-200 px-3 text-sm font-medium" placeholder="Nombre de etapa" value={stage.title} onChange={(event) => updateStage(stageIndex, event.target.value)} /><button className="h-10 w-10 rounded-md border border-slate-200 text-slate-500" type="button" onClick={() => removeStage(stageIndex)}><Trash2 className="mx-auto" size={16} /></button></div><div className="mt-3 space-y-2">{stage.subtasks.map((subtask, subtaskIndex) => <input className="h-10 w-full rounded-md border border-slate-200 px-3 text-sm" key={subtaskIndex} placeholder="Subtarea" value={subtask} onChange={(event) => updateSubtask(stageIndex, subtaskIndex, event.target.value)} />)}<button className="text-sm font-medium text-teal-700" type="button" onClick={() => addSubtask(stageIndex)}>Agregar subtarea</button></div></article>)}</section>
+      <div className="flex justify-end"><button className="h-11 rounded-md bg-teal-700 px-5 text-sm font-semibold text-white disabled:bg-slate-300" disabled={hasInvalidDateRange} type="submit">Crear actividad</button></div>
     </form>
   );
 }

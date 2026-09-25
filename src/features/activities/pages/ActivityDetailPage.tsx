@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { AreaBadge, PriorityBadge, StatusBadge } from '../../../components/common/Badges';
 import { ProgressBar } from '../../../components/common/ProgressBar';
-import { formatDate } from '../../../utils/format';
+import { formatDateRange } from '../../../utils/format';
 import { useActivityStore } from '../stores/activityStore';
 
 export function ActivityDetailPage() {
@@ -24,6 +24,7 @@ export function ActivityDetailPage() {
     deleteSubtask,
     restartActivity,
     setStatus,
+    updateDueDate,
     setReviewCheck,
     deleteActivity
   } = useActivityStore();
@@ -31,6 +32,8 @@ export function ActivityDetailPage() {
   const [newSubtask, setNewSubtask] = useState<Record<string, string>>({});
   const [newStageTitle, setNewStageTitle] = useState('');
   const [note, setNote] = useState('');
+  const [isEditingDueDate, setIsEditingDueDate] = useState(false);
+  const [dueDateDraft, setDueDateDraft] = useState('');
   const activity = activities.find((item) => item.id === activityId);
 
   if (!activity) {
@@ -55,6 +58,12 @@ export function ActivityDetailPage() {
     navigate('/activities');
   }
 
+  async function saveDueDate() {
+    if (selectedActivity.startDate && dueDateDraft && dueDateDraft < selectedActivity.startDate) return;
+    await updateDueDate(selectedActivity.id, dueDateDraft || undefined);
+    setIsEditingDueDate(false);
+  }
+
   return (
     <div className="mx-auto flex w-full max-w-6xl flex-col gap-5 px-4 py-5 sm:px-6 lg:px-8 lg:py-8">
       <header className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
@@ -62,13 +71,28 @@ export function ActivityDetailPage() {
           <div>
             <p className="text-sm font-medium text-teal-700">Detalle de actividad</p>
             <h1 className="mt-1 text-2xl font-semibold text-slate-950">{selectedActivity.title}</h1>
-            <p className="mt-2 text-sm text-slate-500">Fecha: {formatDate(selectedActivity.dueDate)}</p>
+            <p className="mt-2 text-sm text-slate-500">Fecha: {formatDateRange(selectedActivity.startDate, selectedActivity.dueDate)}</p>
+            {isEditingDueDate ? (
+              <div className="mt-3 rounded-md border border-slate-200 bg-slate-50 p-3">
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <label><span className="text-xs font-medium text-slate-500">Fecha inicio registrada</span><input className="mt-1 h-10 w-full rounded-md border border-slate-200 bg-white px-3 text-sm text-slate-500" disabled type="date" value={selectedActivity.startDate || ''} /></label>
+                  <label><span className="text-xs font-medium text-slate-500">Fecha fin</span><input aria-label="Fecha fin de la actividad" className="mt-1 h-10 w-full rounded-md border border-slate-200 bg-white px-3 text-sm" min={selectedActivity.startDate || undefined} type="date" value={dueDateDraft} onChange={(event) => setDueDateDraft(event.target.value)} /></label>
+                </div>
+                {selectedActivity.startDate && dueDateDraft && dueDateDraft < selectedActivity.startDate ? <p className="mt-2 text-sm text-red-600">La fecha fin debe ser igual o posterior a la fecha inicio registrada.</p> : null}
+                <div className="mt-3 flex flex-wrap gap-2">
+                  <button className="rounded-md bg-teal-700 px-3 py-2 text-sm font-semibold text-white" onClick={saveDueDate}>Guardar fecha fin</button>
+                  <button className="rounded-md border border-slate-200 bg-white px-3 py-2 text-sm" onClick={() => setIsEditingDueDate(false)}>Cancelar</button>
+                  <button className="rounded-md border border-red-200 bg-white px-3 py-2 text-sm text-red-700" onClick={() => { void updateDueDate(selectedActivity.id, undefined); setDueDateDraft(''); setIsEditingDueDate(false); }}>Quitar fecha fin</button>
+                </div>
+              </div>
+            ) : null}
           </div>
           <div className="flex flex-wrap gap-2"><AreaBadge area={selectedActivity.area} /><PriorityBadge priority={selectedActivity.priority} /><StatusBadge status={selectedActivity.status} /></div>
         </div>
         <div className="mt-5"><ProgressBar completed={progress.completedSubtasks} total={progress.totalSubtasks} percentage={progress.percentage} /></div>
         <div className="mt-4 flex flex-wrap gap-2">
           <button className="inline-flex items-center gap-2 rounded-md border border-slate-200 px-3 py-2 text-sm" onClick={() => restartActivity(selectedActivity.id)}><RotateCcw size={16} />Iniciar</button>
+          <button className="rounded-md border border-slate-200 px-3 py-2 text-sm" onClick={() => { setDueDateDraft(selectedActivity.dueDate || ''); setIsEditingDueDate(true); }}>Editar fecha fin</button>
           <button className="rounded-md border border-violet-200 px-3 py-2 text-sm text-violet-700" onClick={() => setStatus(selectedActivity.id, 'review')}>Pasar a revision</button>
           <button disabled={!canFinish} className="rounded-md bg-emerald-700 px-3 py-2 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:bg-slate-300" onClick={() => setStatus(selectedActivity.id, 'completed')}>Finalizar actividad</button>
           <button className="rounded-md border border-slate-200 px-3 py-2 text-sm" onClick={() => setStatus(selectedActivity.id, 'archived')}>Archivar</button>
@@ -129,4 +153,3 @@ export function ActivityDetailPage() {
     </div>
   );
 }
-

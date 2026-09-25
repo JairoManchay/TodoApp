@@ -51,7 +51,7 @@ export const taskFlowRepository = {
     const activityId = createId();
     const courseId = draft.area === 'university' ? await findOrCreateCourse(draft.courseName) : undefined;
     const projectId = draft.area === 'work' ? await findOrCreateProject(draft.projectName) : undefined;
-    const activity: Activity = { id: activityId, title: draft.title.trim(), description: draft.description?.trim(), area: draft.area, type: draft.type, courseId, projectId, personalCategory: draft.area === 'personal' ? draft.personalCategory?.trim() : undefined, priority: draft.priority, status: 'pending', dueDate: draft.dueDate, reviewChecklist: { reviewedSteps: false, confirmedNoPending: false }, order: Date.now(), createdAt: timestamp, updatedAt: timestamp };
+    const activity: Activity = { id: activityId, title: draft.title.trim(), description: draft.description?.trim(), area: draft.area, type: draft.type, courseId, projectId, personalCategory: draft.area === 'personal' ? draft.personalCategory?.trim() : undefined, priority: draft.priority, status: 'pending', startDate: draft.startDate, dueDate: draft.dueDate, reviewChecklist: { reviewedSteps: false, confirmedNoPending: false }, order: Date.now(), createdAt: timestamp, updatedAt: timestamp };
     await db.transaction('rw', db.activities, db.taskStages, db.subtasks, db.activityHistory, async () => {
       await db.activities.add(activity);
       for (const [stageIndex, stageDraft] of draft.stages.entries()) {
@@ -77,6 +77,10 @@ export const taskFlowRepository = {
     await addHistory(activityId, status === 'completed' ? 'completed' : status === 'review' ? 'moved_to_review' : 'started', `Estado cambiado a ${status}`);
   },
 
+  async updateDueDate(activityId: string, dueDate?: string) {
+    await db.activities.update(activityId, { dueDate: dueDate || undefined, updatedAt: nowIso() });
+    await addHistory(activityId, 'date_changed', dueDate ? `Extendiste la fecha fin hasta ${dueDate}` : 'Quitaste la fecha fin');
+  },
   async toggleSubtask(subtask: Subtask) {
     const isCompleted = !subtask.isCompleted;
     await db.subtasks.update(subtask.id, { isCompleted, completedAt: isCompleted ? nowIso() : undefined, updatedAt: nowIso() });
@@ -196,5 +200,3 @@ export const taskFlowRepository = {
     await db.courses.delete(courseId);
   }
 };
-
-
