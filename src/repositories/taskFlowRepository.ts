@@ -79,7 +79,7 @@ export const taskFlowRepository = {
 
   async updateDueDate(activityId: string, dueDate?: string) {
     await db.activities.update(activityId, { dueDate: dueDate || undefined, updatedAt: nowIso() });
-    await addHistory(activityId, 'started', dueDate ? `Extendiste la fecha fin hasta ${dueDate}` : 'Quitaste la fecha fin');
+    await addHistory(activityId, 'date_changed', dueDate ? `Extendiste la fecha fin hasta ${dueDate}` : 'Quitaste la fecha fin');
   },
   async toggleSubtask(subtask: Subtask) {
     const isCompleted = !subtask.isCompleted;

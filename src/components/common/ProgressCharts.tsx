@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import type { Activity, ActivityProgress, AreaType } from '../../types/taskflow';
-import { activityOverlapsRange } from '../../utils/format';
+import { activityOverlapsRange, toLocalDateInputValue } from '../../utils/format';
 
 type Period = 'week' | 'month' | 'year';
 
@@ -18,13 +18,9 @@ interface ProgressChartsProps {
   getProgress: (activityId: string) => ActivityProgress;
 }
 
-const periodLabels: Record<Period, string> = { week: 'Semana', month: 'Mes', year: 'Ano' };
+const periodLabels: Record<Period, string> = { week: 'Semana', month: 'Mes', year: 'Año' };
 const areaLabels: Record<AreaType, string> = { work: 'Trabajo', university: 'Universidad', personal: 'Personal' };
 const areaTone: Record<AreaType, string> = { work: 'bg-cyan-600', university: 'bg-indigo-600', personal: 'bg-emerald-600' };
-
-function toDateInputValue(date: Date) {
-  return date.toISOString().slice(0, 10);
-}
 
 function getPeriodRange(period: Period) {
   const now = new Date();
@@ -49,7 +45,7 @@ function getPeriodRange(period: Period) {
     end.setMonth(11, 31);
   }
 
-  return { start: toDateInputValue(start), end: toDateInputValue(end) };
+  return { start: toLocalDateInputValue(start), end: toLocalDateInputValue(end) };
 }
 
 function summarizeArea(area: AreaType, activities: Activity[], getProgress: ProgressChartsProps['getProgress']): AreaMetric {

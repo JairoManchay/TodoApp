@@ -76,13 +76,13 @@ export function ActivityDetailPage() {
               <div className="mt-3 rounded-md border border-slate-200 bg-slate-50 p-3">
                 <div className="grid gap-3 sm:grid-cols-2">
                   <label><span className="text-xs font-medium text-slate-500">Fecha inicio registrada</span><input className="mt-1 h-10 w-full rounded-md border border-slate-200 bg-white px-3 text-sm text-slate-500" disabled type="date" value={selectedActivity.startDate || ''} /></label>
-                  <label><span className="text-xs font-medium text-slate-500">Fecha fin</span><input className="mt-1 h-10 w-full rounded-md border border-slate-200 bg-white px-3 text-sm" min={selectedActivity.startDate || undefined} type="date" value={dueDateDraft} onChange={(event) => setDueDateDraft(event.target.value)} /></label>
+                  <label><span className="text-xs font-medium text-slate-500">Fecha fin</span><input aria-label="Fecha fin de la actividad" className="mt-1 h-10 w-full rounded-md border border-slate-200 bg-white px-3 text-sm" min={selectedActivity.startDate || undefined} type="date" value={dueDateDraft} onChange={(event) => setDueDateDraft(event.target.value)} /></label>
                 </div>
                 {selectedActivity.startDate && dueDateDraft && dueDateDraft < selectedActivity.startDate ? <p className="mt-2 text-sm text-red-600">La fecha fin debe ser igual o posterior a la fecha inicio registrada.</p> : null}
                 <div className="mt-3 flex flex-wrap gap-2">
                   <button className="rounded-md bg-teal-700 px-3 py-2 text-sm font-semibold text-white" onClick={saveDueDate}>Guardar fecha fin</button>
                   <button className="rounded-md border border-slate-200 bg-white px-3 py-2 text-sm" onClick={() => setIsEditingDueDate(false)}>Cancelar</button>
-                  <button className="rounded-md border border-red-200 bg-white px-3 py-2 text-sm text-red-700" onClick={() => setDueDateDraft('')}>Quitar fecha fin</button>
+                  <button className="rounded-md border border-red-200 bg-white px-3 py-2 text-sm text-red-700" onClick={() => { void updateDueDate(selectedActivity.id, undefined); setDueDateDraft(''); setIsEditingDueDate(false); }}>Quitar fecha fin</button>
                 </div>
               </div>
             ) : null}

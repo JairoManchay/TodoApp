@@ -4,6 +4,13 @@ export const areaLabels: Record<AreaType, string> = { university: 'Universidad',
 export const statusLabels: Record<ActivityStatus, string> = { pending: 'Pendiente', in_progress: 'En proceso', review: 'Por revisar', completed: 'Finalizada', archived: 'Archivada' };
 export const priorityLabels: Record<ActivityPriority, string> = { low: 'Baja', medium: 'Media', high: 'Alta', urgent: 'Urgente' };
 
+export function toLocalDateInputValue(date: Date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
 export function formatDate(value?: string) {
   if (!value) return 'Sin fecha';
   return new Intl.DateTimeFormat('es-PE', { day: '2-digit', month: 'short', year: 'numeric' }).format(new Date(`${value}T00:00:00`));
@@ -11,7 +18,7 @@ export function formatDate(value?: string) {
 
 export function isToday(value?: string) {
   if (!value) return false;
-  return value === new Date().toISOString().slice(0, 10);
+  return value === toLocalDateInputValue(new Date());
 }
 
 export function isWithinNextDays(value: string | undefined, days: number) {

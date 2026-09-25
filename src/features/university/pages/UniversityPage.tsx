@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom';
 import { ConfirmDialog } from '../../../components/common/ConfirmDialog';
 import { ProgressBar } from '../../../components/common/ProgressBar';
 import type { Activity, Course } from '../../../types/taskflow';
-import { emptyAreaFilters, filterActivities, type AreaFilters } from '../../../utils/activityFilters';
+import { emptyAreaFilters, filterActivities, hasInvalidAreaFilterRange, type AreaFilters } from '../../../utils/activityFilters';
 import { formatDateRange } from '../../../utils/format';
 import { useActivityStore } from '../../activities/stores/activityStore';
 
@@ -18,6 +18,7 @@ export function UniversityPage() {
   const [deleteTarget, setDeleteTarget] = useState<DeleteTarget>(null);
   const [showFilters, setShowFilters] = useState(false);
   const [filters, setFilters] = useState<AreaFilters>(emptyAreaFilters);
+  const invalidFilterRange = hasInvalidAreaFilterRange(filters);
   const filteredActivities = filterActivities(activities.filter((activity) => activity.area === 'university'), filters);
 
   async function confirmDelete() {
@@ -60,9 +61,9 @@ export function UniversityPage() {
 
       {showFilters ? (
         <section className="mb-4 grid gap-3 rounded-lg border border-slate-200 bg-white p-4 shadow-sm md:grid-cols-5">
-          <input className="h-10 rounded-md border border-slate-200 px-3 text-sm" type="date" value={filters.startDate} onChange={(event) => setFilters({ ...filters, startDate: event.target.value })} />
-          <input className="h-10 rounded-md border border-slate-200 px-3 text-sm" type="date" value={filters.endDate} onChange={(event) => setFilters({ ...filters, endDate: event.target.value })} />
-          <select className="h-10 rounded-md border border-slate-200 px-3 text-sm" value={filters.type} onChange={(event) => setFilters({ ...filters, type: event.target.value as AreaFilters['type'] })}>
+          <input aria-label="Filtrar desde fecha inicio" className="h-10 rounded-md border border-slate-200 px-3 text-sm" type="date" value={filters.startDate} onChange={(event) => setFilters({ ...filters, startDate: event.target.value })} />
+          <input aria-label="Filtrar hasta fecha fin" className="h-10 rounded-md border border-slate-200 px-3 text-sm" type="date" value={filters.endDate} onChange={(event) => setFilters({ ...filters, endDate: event.target.value })} />
+          <select aria-label="Filtrar por tipo" className="h-10 rounded-md border border-slate-200 px-3 text-sm" value={filters.type} onChange={(event) => setFilters({ ...filters, type: event.target.value as AreaFilters['type'] })}>
             <option value="all">Todos los tipos</option>
             <option value="exam">Examen</option>
             <option value="graded_practice">Practica calificada</option>
@@ -76,14 +77,14 @@ export function UniversityPage() {
             <option value="reading">Lectura</option>
             <option value="other">Otro</option>
           </select>
-          <select className="h-10 rounded-md border border-slate-200 px-3 text-sm" value={filters.priority} onChange={(event) => setFilters({ ...filters, priority: event.target.value as AreaFilters['priority'] })}>
+          <select aria-label="Filtrar por prioridad" className="h-10 rounded-md border border-slate-200 px-3 text-sm" value={filters.priority} onChange={(event) => setFilters({ ...filters, priority: event.target.value as AreaFilters['priority'] })}>
             <option value="all">Toda prioridad</option>
             <option value="urgent">Urgente</option>
             <option value="high">Alta</option>
             <option value="medium">Media</option>
             <option value="low">Baja</option>
           </select>
-          <select className="h-10 rounded-md border border-slate-200 px-3 text-sm" value={filters.status} onChange={(event) => setFilters({ ...filters, status: event.target.value as AreaFilters['status'] })}>
+          <select aria-label="Filtrar por estado" className="h-10 rounded-md border border-slate-200 px-3 text-sm" value={filters.status} onChange={(event) => setFilters({ ...filters, status: event.target.value as AreaFilters['status'] })}>
             <option value="all">Todo estado</option>
             <option value="pending">Pendiente</option>
             <option value="in_progress">En proceso</option>
@@ -93,6 +94,7 @@ export function UniversityPage() {
           </select>
         </section>
       ) : null}
+      {invalidFilterRange ? <p className="mb-4 text-sm text-red-600">La fecha fin del filtro debe ser igual o posterior a la fecha inicio.</p> : null}
 
       <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
         {courses.map((course) => {
