@@ -6,6 +6,7 @@ import { ActivitiesPage } from '../features/activities/pages/ActivitiesPage';
 import { CalendarPage } from '../features/calendar/pages/CalendarPage';
 import { DashboardPage } from '../features/dashboard/pages/DashboardPage';
 import { PersonalPage } from '../features/personal/pages/PersonalPage';
+import { ReportsPage } from '../features/reports/pages/ReportsPage';
 import { SettingsPage } from '../features/settings/pages/SettingsPage';
 import { UniversityPage } from '../features/university/pages/UniversityPage';
 import { WorkPage } from '../features/work/pages/WorkPage';
@@ -23,6 +24,7 @@ export const router = createBrowserRouter([
       { path: 'work', element: <WorkPage /> },
       { path: 'personal', element: <PersonalPage /> },
       { path: 'calendar', element: <CalendarPage /> },
+      { path: 'reports', element: <ReportsPage /> },
       { path: 'settings', element: <SettingsPage /> }
     ]
   }
