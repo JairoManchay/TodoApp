@@ -2,7 +2,7 @@ import { AlertTriangle, ArrowRight, CalendarClock, ClipboardCheck, ListTodo, Plu
 import { Link } from 'react-router-dom';
 import { AreaBadge, PriorityBadge, StatusBadge } from '../../../components/common/Badges';
 import { ProgressBar } from '../../../components/common/ProgressBar';
-import { ProgressCharts } from '../../../components/common/ProgressCharts';
+import { ProgressCharts } from '../../reports/components/ProgressCharts';
 import { useActivityStore } from '../../activities/stores/activityStore';
 import { formatDateRange, isToday, isWithinNextDays } from '../../../utils/format';
 
