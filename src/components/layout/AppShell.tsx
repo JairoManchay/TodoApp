@@ -1,4 +1,4 @@
-import { BriefcaseBusiness, CalendarDays, CheckCircle2, GraduationCap, Home, Layers3, MoreHorizontal, Settings, UserRound } from 'lucide-react';
+import { BarChart3, BriefcaseBusiness, CalendarDays, CheckCircle2, GraduationCap, Home, Layers3, MoreHorizontal, Settings, UserRound } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { useState } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
@@ -9,6 +9,7 @@ const navigationItems = [
   { label: 'Trabajo', icon: BriefcaseBusiness, to: '/work' },
   { label: 'Personal', icon: UserRound, to: '/personal' },
   { label: 'Calendario', icon: CalendarDays, to: '/calendar' },
+  { label: 'Reportes', icon: BarChart3, to: '/reports' },
   { label: 'Ajustes', icon: Settings, to: '/settings' }
 ];
 
@@ -21,6 +22,7 @@ const areaItems = [
 const moreItems = [
   { label: 'Actividades', icon: CheckCircle2, to: '/activities' },
   { label: 'Calendario', icon: CalendarDays, to: '/calendar' },
+  { label: 'Reportes', icon: BarChart3, to: '/reports' },
   { label: 'Ajustes', icon: Settings, to: '/settings' }
 ];
 
