@@ -23,16 +23,12 @@ const typeOptions: Record<AreaType, Array<{ value: ActivityType; label: string }
   ],
   university: [
     { value: 'exam', label: 'Examen' },
-    { value: 'pc', label: 'PC' },
-    { value: 'graded_practice', label: 'Practica calificada' },
-    { value: 'presentation', label: 'Exposicion' },
-    { value: 'homework', label: 'Tarea' },
+    { value: 'pc', label: 'Practica' },
+    { value: 'homework', label: 'Trabajo' },
     { value: 'project', label: 'Proyecto' },
-    { value: 'lab', label: 'Laboratorio' },
-    { value: 'report', label: 'Informe' },
-    { value: 'delivery', label: 'Entrega' },
-    { value: 'reading', label: 'Lectura' },
-    { value: 'other', label: 'Otro' }
+    { value: 'presentation', label: 'Exposicion' },
+    { value: 'reading', label: 'Repaso' },
+    { value: 'reminder', label: 'Recordatorio' }
   ],
   personal: [
     { value: 'gym', label: 'Gimnasio' },

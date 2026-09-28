@@ -68,16 +68,12 @@ export function UniversityPage() {
           <select aria-label="Filtrar por tipo" className="h-10 rounded-md border border-slate-200 px-3 text-sm" value={filters.type} onChange={(event) => setFilters({ ...filters, type: event.target.value as AreaFilters['type'] })}>
             <option value="all">Todos los tipos</option>
             <option value="exam">Examen</option>
-            <option value="graded_practice">Practica calificada</option>
-            <option value="pc">PC</option>
-            <option value="presentation">Exposicion</option>
-            <option value="homework">Tarea</option>
+            <option value="pc">Practica</option>
+            <option value="homework">Trabajo</option>
             <option value="project">Proyecto</option>
-            <option value="lab">Laboratorio</option>
-            <option value="report">Informe</option>
-            <option value="delivery">Entrega</option>
-            <option value="reading">Lectura</option>
-            <option value="other">Otro</option>
+            <option value="presentation">Exposicion</option>
+            <option value="reading">Repaso</option>
+            <option value="reminder">Recordatorio</option>
           </select>
           <select aria-label="Filtrar por prioridad" className="h-10 rounded-md border border-slate-200 px-3 text-sm" value={filters.priority} onChange={(event) => setFilters({ ...filters, priority: event.target.value as AreaFilters['priority'] })}>
             <option value="all">Toda prioridad</option>

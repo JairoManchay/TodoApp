@@ -12,23 +12,30 @@ const templates: Partial<Record<ActivityType, StageDraft[]>> = {
     { title: 'Practica', subtasks: ['Resolver ejercicios base', 'Practicar casos similares', 'Marcar dudas'] },
     { title: 'Revision', subtasks: ['Revisar procedimiento', 'Corregir errores frecuentes', 'Repasar formulas o conceptos'] }
   ],
-  graded_practice: [
-    { title: 'Preparacion', subtasks: ['Revisar indicaciones', 'Practicar ejercicios clave', 'Confirmar fecha y temas'] },
-    { title: 'Cierre', subtasks: ['Resolver simulacro', 'Revisar respuestas', 'Anotar dudas finales'] }
-  ],
-  presentation: [
-    { title: 'Investigacion', subtasks: ['Definir tema central', 'Buscar fuentes', 'Seleccionar ideas clave'] },
-    { title: 'Material', subtasks: ['Armar diapositivas', 'Preparar ejemplos', 'Revisar ortografia'] },
-    { title: 'Ensayo', subtasks: ['Practicar exposicion', 'Medir tiempo', 'Preparar respuestas'] }
-  ],
   homework: [
-    { title: 'Desarrollo', subtasks: ['Leer indicaciones', 'Resolver la tarea', 'Guardar evidencias'] },
+    { title: 'Desarrollo', subtasks: ['Leer indicaciones', 'Resolver el trabajo', 'Guardar evidencias'] },
     { title: 'Revision', subtasks: ['Revisar formato', 'Corregir errores', 'Confirmar entrega'] }
   ],
   project: [
     { title: 'Planificacion', subtasks: ['Definir alcance', 'Dividir tareas', 'Acordar responsabilidades'] },
     { title: 'Ejecucion', subtasks: ['Desarrollar entregables', 'Revisar avances', 'Resolver bloqueos'] },
     { title: 'Entrega', subtasks: ['Consolidar version final', 'Validar requisitos', 'Enviar proyecto'] }
+  ],
+  presentation: [
+    { title: 'Investigacion', subtasks: ['Definir tema central', 'Buscar fuentes', 'Seleccionar ideas clave'] },
+    { title: 'Material', subtasks: ['Armar diapositivas', 'Preparar ejemplos', 'Revisar ortografia'] },
+    { title: 'Ensayo', subtasks: ['Practicar exposicion', 'Medir tiempo', 'Preparar respuestas'] }
+  ],
+  reading: [
+    { title: 'Repaso', subtasks: ['Revisar apuntes', 'Subrayar ideas clave', 'Anotar dudas'] },
+    { title: 'Refuerzo', subtasks: ['Resolver ejercicios', 'Crear resumen', 'Repasar puntos debiles'] }
+  ],
+  reminder: [
+    { title: 'Recordatorio', subtasks: ['Confirmar pendiente', 'Revisar fecha', 'Marcar como completado'] }
+  ],
+  graded_practice: [
+    { title: 'Practica', subtasks: ['Revisar indicaciones', 'Practicar ejercicios clave', 'Confirmar fecha y temas'] },
+    { title: 'Cierre', subtasks: ['Resolver simulacro', 'Revisar respuestas', 'Anotar dudas finales'] }
   ],
   lab: [
     { title: 'Preparacion', subtasks: ['Revisar guia', 'Listar materiales', 'Repasar procedimiento'] },
@@ -43,19 +50,11 @@ const templates: Partial<Record<ActivityType, StageDraft[]>> = {
   delivery: [
     { title: 'Preparacion', subtasks: ['Confirmar requisitos', 'Completar pendientes', 'Revisar archivos'] },
     { title: 'Entrega', subtasks: ['Subir evidencia', 'Confirmar recepcion', 'Guardar comprobante'] }
-  ],
-  reading: [
-    { title: 'Lectura', subtasks: ['Leer material', 'Subrayar ideas clave', 'Anotar dudas'] },
-    { title: 'Resumen', subtasks: ['Crear resumen', 'Listar conceptos importantes', 'Preparar preguntas'] }
-  ],
-  other: [
-    { title: 'Preparacion', subtasks: ['Definir objetivo', 'Listar pendientes', 'Organizar materiales'] },
-    { title: 'Cierre', subtasks: ['Revisar avances', 'Confirmar pendientes', 'Registrar conclusiones'] }
   ]
 };
 
 export function getAcademicTemplate(type: ActivityType): StageDraft[] {
-  return (templates[type] ?? templates.other ?? []).map((stage) => ({
+  return (templates[type] ?? templates.reminder ?? []).map((stage) => ({
     title: stage.title,
     subtasks: [...stage.subtasks]
   }));
