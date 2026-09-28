@@ -94,6 +94,7 @@ export function UniversityPage() {
             <option value="completed">Finalizada</option>
             <option value="archived">Archivada</option>
           </select>
+          <button className="h-10 rounded-md border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700" type="button" onClick={() => setFilters(emptyAreaFilters)}>Borrar filtros</button>
         </section>
       ) : null}
       {invalidFilterRange ? <p className="mb-4 text-sm text-red-600">La fecha fin del filtro debe ser igual o posterior a la fecha inicio.</p> : null}
