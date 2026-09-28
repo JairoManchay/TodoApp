@@ -25,7 +25,8 @@ export function filterActivities(activities: Activity[], filters: AreaFilters) {
   if (hasInvalidAreaFilterRange(filters)) return [];
 
   return activities.filter((activity) => {
-    const dateMatch = activityOverlapsRange(activity.startDate, activity.dueDate, filters.startDate, filters.endDate);
+    const filterEndDate = filters.endDate || filters.startDate;
+    const dateMatch = activityOverlapsRange(activity.startDate, activity.dueDate, filters.startDate, filterEndDate);
     const typeMatch = filters.type === 'all' || activity.type === filters.type;
     const priorityMatch = filters.priority === 'all' || activity.priority === filters.priority;
     const statusMatch = filters.status === 'all' || activity.status === filters.status;
