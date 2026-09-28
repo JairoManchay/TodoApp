@@ -3,6 +3,7 @@ import { FormEvent, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import type { ActivityDraft, ActivityType, AreaType } from '../../../types/taskflow';
 import { useActivityStore } from '../stores/activityStore';
+import { getAcademicTemplate, hasAcademicTemplate } from '../utils/academicTemplates';
 
 const defaultStage = { title: 'Preparacion', subtasks: [''] };
 
@@ -23,10 +24,13 @@ const typeOptions: Record<AreaType, Array<{ value: ActivityType; label: string }
   university: [
     { value: 'exam', label: 'Examen' },
     { value: 'pc', label: 'PC' },
+    { value: 'graded_practice', label: 'Practica calificada' },
     { value: 'presentation', label: 'Exposicion' },
     { value: 'homework', label: 'Tarea' },
+    { value: 'project', label: 'Proyecto' },
     { value: 'lab', label: 'Laboratorio' },
     { value: 'report', label: 'Informe' },
+    { value: 'delivery', label: 'Entrega' },
     { value: 'reading', label: 'Lectura' },
     { value: 'other', label: 'Otro' }
   ],
@@ -51,17 +55,35 @@ export function ActivityFormPage() {
   const createActivity = useActivityStore((state) => state.createActivity);
   const [draft, setDraft] = useState<ActivityDraft>({ title: '', description: '', area: 'work', type: 'feature', projectName: '', courseName: '', personalCategory: '', priority: 'medium', startDate: '', dueDate: '', stages: [defaultStage] });
   const [extendDueDate, setExtendDueDate] = useState(false);
+  const [templateMode, setTemplateMode] = useState<'custom' | 'template'>('custom');
   const hasInvalidDateRange = Boolean(extendDueDate && draft.startDate && draft.dueDate && draft.dueDate < draft.startDate);
+  const canUseAcademicTemplate = draft.area === 'university' && hasAcademicTemplate(draft.type);
 
   function updateArea(area: AreaType) {
+    setTemplateMode('custom');
     setDraft((current) => ({ ...current, area, type: defaultTypeForArea(area) }));
   }
 
-  function updateStage(index: number, title: string) { setDraft((current) => ({ ...current, stages: current.stages.map((stage, stageIndex) => stageIndex === index ? { ...stage, title } : stage) })); }
-  function updateSubtask(stageIndex: number, subtaskIndex: number, title: string) { setDraft((current) => ({ ...current, stages: current.stages.map((stage, index) => index === stageIndex ? { ...stage, subtasks: stage.subtasks.map((item, itemIndex) => itemIndex === subtaskIndex ? title : item) } : stage) })); }
-  function addStage() { setDraft((current) => ({ ...current, stages: [...current.stages, { title: '', subtasks: [''] }] })); }
-  function addSubtask(stageIndex: number) { setDraft((current) => ({ ...current, stages: current.stages.map((stage, index) => index === stageIndex ? { ...stage, subtasks: [...stage.subtasks, ''] } : stage) })); }
-  function removeStage(stageIndex: number) { setDraft((current) => ({ ...current, stages: current.stages.filter((_, index) => index !== stageIndex) })); }
+  function updateType(type: ActivityType) {
+    setTemplateMode('custom');
+    setDraft((current) => ({ ...current, type }));
+  }
+
+  function applyAcademicTemplate() {
+    if (!canUseAcademicTemplate) return;
+    setDraft((current) => ({ ...current, stages: getAcademicTemplate(current.type) }));
+    setTemplateMode('template');
+  }
+
+  function useCustomChecklist() {
+    setTemplateMode('custom');
+  }
+
+  function updateStage(index: number, title: string) { setTemplateMode('custom'); setDraft((current) => ({ ...current, stages: current.stages.map((stage, stageIndex) => stageIndex === index ? { ...stage, title } : stage) })); }
+  function updateSubtask(stageIndex: number, subtaskIndex: number, title: string) { setTemplateMode('custom'); setDraft((current) => ({ ...current, stages: current.stages.map((stage, index) => index === stageIndex ? { ...stage, subtasks: stage.subtasks.map((item, itemIndex) => itemIndex === subtaskIndex ? title : item) } : stage) })); }
+  function addStage() { setTemplateMode('custom'); setDraft((current) => ({ ...current, stages: [...current.stages, { title: '', subtasks: [''] }] })); }
+  function addSubtask(stageIndex: number) { setTemplateMode('custom'); setDraft((current) => ({ ...current, stages: current.stages.map((stage, index) => index === stageIndex ? { ...stage, subtasks: [...stage.subtasks, ''] } : stage) })); }
+  function removeStage(stageIndex: number) { setTemplateMode('custom'); setDraft((current) => ({ ...current, stages: current.stages.filter((_, index) => index !== stageIndex) })); }
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
@@ -78,7 +100,19 @@ export function ActivityFormPage() {
 
         <fieldset className="md:col-span-2"><legend className="text-sm font-medium">Area</legend><div className="mt-2 grid gap-2 sm:grid-cols-3">{areaOptions.map((option) => <button className={`flex items-center gap-3 rounded-md border px-3 py-3 text-left text-sm font-medium ${draft.area === option.value ? 'border-teal-600 bg-teal-50 text-teal-800' : 'border-slate-200 bg-white text-slate-600'}`} key={option.value} type="button" onClick={() => updateArea(option.value)}><option.icon size={18} />{option.label}</button>)}</div></fieldset>
 
-        <fieldset className="md:col-span-2"><legend className="text-sm font-medium">Tipo de actividad</legend><div className="mt-2 flex flex-wrap gap-2">{typeOptions[draft.area].map((option) => <button className={`rounded-md border px-3 py-2 text-sm font-medium ${draft.type === option.value ? 'border-teal-600 bg-teal-50 text-teal-800' : 'border-slate-200 bg-white text-slate-600'}`} key={option.value} type="button" onClick={() => setDraft({ ...draft, type: option.value })}>{option.label}</button>)}</div></fieldset>
+        <fieldset className="md:col-span-2"><legend className="text-sm font-medium">Tipo de actividad</legend><div className="mt-2 flex flex-wrap gap-2">{typeOptions[draft.area].map((option) => <button className={`rounded-md border px-3 py-2 text-sm font-medium ${draft.type === option.value ? 'border-teal-600 bg-teal-50 text-teal-800' : 'border-slate-200 bg-white text-slate-600'}`} key={option.value} type="button" onClick={() => updateType(option.value)}>{option.label}</button>)}</div></fieldset>
+
+        {draft.area === 'university' ? (
+          <section className="md:col-span-2 rounded-lg border border-slate-200 bg-slate-50 p-3">
+            <div className="flex flex-wrap items-center gap-2">
+              <button className="h-9 rounded-md bg-teal-700 px-3 text-sm font-semibold text-white disabled:bg-slate-300" disabled={!canUseAcademicTemplate} type="button" onClick={applyAcademicTemplate}>Aplicar plantilla</button>
+              <button className={`h-9 rounded-md border px-3 text-sm font-semibold ${templateMode === 'custom' ? 'border-teal-600 bg-white text-teal-800' : 'border-slate-200 bg-white text-slate-600'}`} type="button" onClick={useCustomChecklist}>Editar personalmente</button>
+            </div>
+            <p className="mt-2 text-sm text-slate-500">
+              {templateMode === 'template' ? 'Plantilla aplicada. Puedes editar etapas y subtareas antes de crear.' : 'Edita las etapas y subtareas a tu modo, o aplica una plantilla sugerida.'}
+            </p>
+          </section>
+        ) : null}
 
         <label><span className="text-sm font-medium">Prioridad</span><select className="mt-1 h-10 w-full rounded-md border border-slate-200 px-3 text-sm" value={draft.priority} onChange={(event) => setDraft({ ...draft, priority: event.target.value as ActivityDraft['priority'] })}><option value="low">Baja</option><option value="medium">Media</option><option value="high">Alta</option><option value="urgent">Urgente</option></select></label>
         <label><span className="text-sm font-medium">Fecha inicio</span><input className="mt-1 h-10 w-full rounded-md border border-slate-200 px-3 text-sm" type="date" value={draft.startDate} onChange={(event) => setDraft({ ...draft, startDate: event.target.value })} /></label>
