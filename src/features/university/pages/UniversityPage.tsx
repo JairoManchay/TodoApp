@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom';
 import { ConfirmDialog } from '../../../components/common/ConfirmDialog';
 import { ProgressBar } from '../../../components/common/ProgressBar';
 import type { Activity, Course } from '../../../types/taskflow';
-import { emptyAreaFilters, filterActivities, hasInvalidAreaFilterRange, type AreaFilters } from '../../../utils/activityFilters';
+import { emptyAreaFilters, filterActivities, hasActiveAreaFilters, hasInvalidAreaFilterRange, type AreaFilters } from '../../../utils/activityFilters';
 import { formatDateRange } from '../../../utils/format';
 import { useActivityStore } from '../../activities/stores/activityStore';
 
@@ -19,7 +19,9 @@ export function UniversityPage() {
   const [showFilters, setShowFilters] = useState(false);
   const [filters, setFilters] = useState<AreaFilters>(emptyAreaFilters);
   const invalidFilterRange = hasInvalidAreaFilterRange(filters);
+  const activeFilters = hasActiveAreaFilters(filters);
   const filteredActivities = filterActivities(activities.filter((activity) => activity.area === 'university'), filters);
+  const visibleCourses = activeFilters ? courses.filter((course) => filteredActivities.some((activity) => activity.courseId === course.id)) : courses;
 
   async function confirmDelete() {
     if (!deleteTarget) return;
@@ -97,7 +99,7 @@ export function UniversityPage() {
       {invalidFilterRange ? <p className="mb-4 text-sm text-red-600">La fecha fin del filtro debe ser igual o posterior a la fecha inicio.</p> : null}
 
       <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-        {courses.map((course) => {
+        {visibleCourses.map((course) => {
           const courseActivities = filteredActivities.filter((activity) => activity.courseId === course.id);
           const completed = courseActivities.filter((activity) => activity.status === 'completed').length;
 
@@ -134,7 +136,7 @@ export function UniversityPage() {
             </article>
           );
         })}
-        {courses.length === 0 ? <p className="text-sm text-slate-500">Falta construir tu primera Tarea</p> : null}
+        {visibleCourses.length === 0 ? <p className="text-sm text-slate-500">Falta construir tu primera Tarea</p> : null}
       </section>
 
       <ConfirmDialog

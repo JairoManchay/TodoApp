@@ -21,6 +21,10 @@ export function hasInvalidAreaFilterRange(filters: AreaFilters) {
   return Boolean(filters.startDate && filters.endDate && filters.endDate < filters.startDate);
 }
 
+export function hasActiveAreaFilters(filters: AreaFilters) {
+  return Boolean(filters.startDate || filters.endDate || filters.type !== 'all' || filters.priority !== 'all' || filters.status !== 'all');
+}
+
 export function filterActivities(activities: Activity[], filters: AreaFilters) {
   if (hasInvalidAreaFilterRange(filters)) return [];
 
