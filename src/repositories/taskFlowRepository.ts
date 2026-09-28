@@ -86,17 +86,21 @@ export const taskFlowRepository = {
     const timestamp = nowIso();
     const courseId = payload.area === 'university' ? await findOrCreateCourse(payload.courseName) : undefined;
     const projectId = payload.area === 'work' ? await findOrCreateProject(payload.projectName) : undefined;
-    const patch: Partial<Activity> = {
-      area: payload.area,
-      type: payload.type,
-      courseId,
-      projectId,
-      personalCategory: payload.area === 'personal' ? payload.personalCategory?.trim() : undefined,
-      updatedAt: timestamp
-    };
-
     await db.transaction('rw', [db.activities, db.activityHistory], async () => {
-      await db.activities.update(activityId, patch);
+      await db.activities.where('id').equals(activityId).modify((activity) => {
+        activity.area = payload.area;
+        activity.type = payload.type;
+        activity.updatedAt = timestamp;
+
+        if (payload.area === 'university') activity.courseId = courseId;
+        else delete activity.courseId;
+
+        if (payload.area === 'work') activity.projectId = projectId;
+        else delete activity.projectId;
+
+        if (payload.area === 'personal') activity.personalCategory = payload.personalCategory?.trim();
+        else delete activity.personalCategory;
+      });
       await addHistory(activityId, 'area_changed', `Cambiaste la actividad al modulo ${payload.area}`);
     });
   },
@@ -208,13 +212,13 @@ export const taskFlowRepository = {
   },
 
   async deleteProject(projectId: string) {
-    const relatedActivities = await db.activities.where('projectId').equals(projectId).count();
+    const relatedActivities = await db.activities.where('projectId').equals(projectId).and((activity) => activity.area === 'work').count();
     if (relatedActivities > 0) throw new Error('No puedes eliminar un proyecto con tareas asociadas. Elimina primero sus tareas.');
     await db.projects.delete(projectId);
   },
 
   async deleteCourse(courseId: string) {
-    const relatedActivities = await db.activities.where('courseId').equals(courseId).count();
+    const relatedActivities = await db.activities.where('courseId').equals(courseId).and((activity) => activity.area === 'university').count();
     if (relatedActivities > 0) throw new Error('No puedes eliminar un curso con actividades asociadas. Elimina primero sus actividades.');
     await db.courses.delete(courseId);
   }
