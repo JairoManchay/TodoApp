@@ -55,35 +55,29 @@ export function ActivityFormPage() {
   const createActivity = useActivityStore((state) => state.createActivity);
   const [draft, setDraft] = useState<ActivityDraft>({ title: '', description: '', area: 'work', type: 'feature', projectName: '', courseName: '', personalCategory: '', priority: 'medium', startDate: '', dueDate: '', stages: [defaultStage] });
   const [extendDueDate, setExtendDueDate] = useState(false);
-  const [templateMode, setTemplateMode] = useState<'custom' | 'template'>('custom');
   const hasInvalidDateRange = Boolean(extendDueDate && draft.startDate && draft.dueDate && draft.dueDate < draft.startDate);
   const canUseAcademicTemplate = draft.area === 'university' && hasAcademicTemplate(draft.type);
 
   function updateArea(area: AreaType) {
-    setTemplateMode('custom');
     setDraft((current) => ({ ...current, area, type: defaultTypeForArea(area) }));
   }
 
   function updateType(type: ActivityType) {
-    setTemplateMode('custom');
     setDraft((current) => ({ ...current, type }));
   }
 
   function applyAcademicTemplate() {
     if (!canUseAcademicTemplate) return;
     setDraft((current) => ({ ...current, stages: getAcademicTemplate(current.type) }));
-    setTemplateMode('template');
   }
 
-  function useCustomChecklist() {
-    setTemplateMode('custom');
-  }
 
-  function updateStage(index: number, title: string) { setTemplateMode('custom'); setDraft((current) => ({ ...current, stages: current.stages.map((stage, stageIndex) => stageIndex === index ? { ...stage, title } : stage) })); }
-  function updateSubtask(stageIndex: number, subtaskIndex: number, title: string) { setTemplateMode('custom'); setDraft((current) => ({ ...current, stages: current.stages.map((stage, index) => index === stageIndex ? { ...stage, subtasks: stage.subtasks.map((item, itemIndex) => itemIndex === subtaskIndex ? title : item) } : stage) })); }
-  function addStage() { setTemplateMode('custom'); setDraft((current) => ({ ...current, stages: [...current.stages, { title: '', subtasks: [''] }] })); }
-  function addSubtask(stageIndex: number) { setTemplateMode('custom'); setDraft((current) => ({ ...current, stages: current.stages.map((stage, index) => index === stageIndex ? { ...stage, subtasks: [...stage.subtasks, ''] } : stage) })); }
-  function removeStage(stageIndex: number) { setTemplateMode('custom'); setDraft((current) => ({ ...current, stages: current.stages.filter((_, index) => index !== stageIndex) })); }
+
+  function updateStage(index: number, title: string) { setDraft((current) => ({ ...current, stages: current.stages.map((stage, stageIndex) => stageIndex === index ? { ...stage, title } : stage) })); }
+  function updateSubtask(stageIndex: number, subtaskIndex: number, title: string) { setDraft((current) => ({ ...current, stages: current.stages.map((stage, index) => index === stageIndex ? { ...stage, subtasks: stage.subtasks.map((item, itemIndex) => itemIndex === subtaskIndex ? title : item) } : stage) })); }
+  function addStage() { setDraft((current) => ({ ...current, stages: [...current.stages, { title: '', subtasks: [''] }] })); }
+  function addSubtask(stageIndex: number) { setDraft((current) => ({ ...current, stages: current.stages.map((stage, index) => index === stageIndex ? { ...stage, subtasks: [...stage.subtasks, ''] } : stage) })); }
+  function removeStage(stageIndex: number) { setDraft((current) => ({ ...current, stages: current.stages.filter((_, index) => index !== stageIndex) })); }
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
@@ -104,13 +98,8 @@ export function ActivityFormPage() {
 
         {draft.area === 'university' ? (
           <section className="md:col-span-2 rounded-lg border border-slate-200 bg-slate-50 p-3">
-            <div className="flex flex-wrap items-center gap-2">
-              <button className="h-9 rounded-md bg-teal-700 px-3 text-sm font-semibold text-white disabled:bg-slate-300" disabled={!canUseAcademicTemplate} type="button" onClick={applyAcademicTemplate}>Aplicar plantilla</button>
-              <button className={`h-9 rounded-md border px-3 text-sm font-semibold ${templateMode === 'custom' ? 'border-teal-600 bg-white text-teal-800' : 'border-slate-200 bg-white text-slate-600'}`} type="button" onClick={useCustomChecklist}>Editar personalmente</button>
-            </div>
-            <p className="mt-2 text-sm text-slate-500">
-              {templateMode === 'template' ? 'Plantilla aplicada. Puedes editar etapas y subtareas antes de crear.' : 'Edita las etapas y subtareas a tu modo, o aplica una plantilla sugerida.'}
-            </p>
+            <button className="h-9 rounded-md bg-teal-700 px-3 text-sm font-semibold text-white disabled:bg-slate-300" disabled={!canUseAcademicTemplate} type="button" onClick={applyAcademicTemplate}>Aplicar plantilla</button>
+            <p className="mt-2 text-sm text-slate-500">Aplica una plantilla sugerida y edita etapas o subtareas antes de crear.</p>
           </section>
         ) : null}
 
