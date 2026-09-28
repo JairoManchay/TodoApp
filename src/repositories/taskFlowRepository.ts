@@ -1,5 +1,5 @@
 import { db } from '../database/db';
-import type { Activity, ActivityDraft, ActivityHistory, Course, Note, Project, ResourceLink, Settings, Subtask, TaskFlowBackup, TaskStage } from '../types/taskflow';
+import type { Activity, ActivityDraft, ActivityHistory, ActivityType, AreaType, Course, Note, Project, ResourceLink, Settings, Subtask, TaskFlowBackup, TaskStage } from '../types/taskflow';
 import { createId, nowIso } from '../utils/ids';
 
 export interface TaskFlowData { courses: Course[]; projects: Project[]; activities: Activity[]; taskStages: TaskStage[]; subtasks: Subtask[]; notes: Note[]; activityHistory: ActivityHistory[]; resourceLinks: ResourceLink[]; settings: Settings[]; }
@@ -80,6 +80,25 @@ export const taskFlowRepository = {
   async updateDueDate(activityId: string, dueDate?: string) {
     await db.activities.update(activityId, { dueDate: dueDate || undefined, updatedAt: nowIso() });
     await addHistory(activityId, 'date_changed', dueDate ? `Extendiste la fecha fin hasta ${dueDate}` : 'Quitaste la fecha fin');
+  },
+
+  async updateActivityArea(activityId: string, payload: { area: AreaType; type: ActivityType; courseName?: string; projectName?: string; personalCategory?: string }) {
+    const timestamp = nowIso();
+    const courseId = payload.area === 'university' ? await findOrCreateCourse(payload.courseName) : undefined;
+    const projectId = payload.area === 'work' ? await findOrCreateProject(payload.projectName) : undefined;
+    const patch: Partial<Activity> = {
+      area: payload.area,
+      type: payload.type,
+      courseId,
+      projectId,
+      personalCategory: payload.area === 'personal' ? payload.personalCategory?.trim() : undefined,
+      updatedAt: timestamp
+    };
+
+    await db.transaction('rw', [db.activities, db.activityHistory], async () => {
+      await db.activities.update(activityId, patch);
+      await addHistory(activityId, 'area_changed', `Cambiaste la actividad al modulo ${payload.area}`);
+    });
   },
   async toggleSubtask(subtask: Subtask) {
     const isCompleted = !subtask.isCompleted;

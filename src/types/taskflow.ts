@@ -2,7 +2,7 @@ export type AreaType = 'university' | 'work' | 'personal';
 export type ActivityStatus = 'pending' | 'in_progress' | 'review' | 'completed' | 'archived';
 export type ActivityPriority = 'low' | 'medium' | 'high' | 'urgent';
 export type ActivityType = 'exam' | 'graded_practice' | 'pc' | 'presentation' | 'homework' | 'project' | 'lab' | 'report' | 'delivery' | 'reading' | 'feature' | 'bugfix' | 'documentation' | 'meeting' | 'gym' | 'shopping' | 'errand' | 'payment' | 'appointment' | 'reminder' | 'personal_goal' | 'other';
-export type HistoryEventType = 'created' | 'started' | 'stage_created' | 'subtask_created' | 'subtask_completed' | 'subtask_reopened' | 'subtask_deleted' | 'moved_to_review' | 'review_checked' | 'completed' | 'archived' | 'note_created' | 'date_changed';
+export type HistoryEventType = 'created' | 'started' | 'stage_created' | 'subtask_created' | 'subtask_completed' | 'subtask_reopened' | 'subtask_deleted' | 'moved_to_review' | 'review_checked' | 'completed' | 'archived' | 'note_created' | 'date_changed' | 'area_changed';
 
 export interface Course { id: string; name: string; description?: string; color?: string; isArchived: boolean; createdAt: string; updatedAt: string; }
 export interface Project { id: string; name: string; description?: string; color?: string; isArchived: boolean; createdAt: string; updatedAt: string; }
