@@ -3,14 +3,51 @@ import { useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { AreaBadge, PriorityBadge, StatusBadge } from '../../../components/common/Badges';
 import { ProgressBar } from '../../../components/common/ProgressBar';
+import type { ActivityType, AreaType } from '../../../types/taskflow';
 import { formatDateRange } from '../../../utils/format';
 import { useActivityStore } from '../stores/activityStore';
+const areaLabels: Record<AreaType, string> = { work: 'Trabajo', university: 'Universidad', personal: 'Personal' };
+
+const detailTypeOptions: Record<AreaType, Array<{ value: ActivityType; label: string }>> = {
+  work: [
+    { value: 'feature', label: 'Funcionalidad' },
+    { value: 'bugfix', label: 'Correccion' },
+    { value: 'documentation', label: 'Documentacion' },
+    { value: 'meeting', label: 'Reunion' },
+    { value: 'other', label: 'Otro' }
+  ],
+  university: [
+    { value: 'exam', label: 'Examen' },
+    { value: 'pc', label: 'Practica' },
+    { value: 'homework', label: 'Trabajo' },
+    { value: 'project', label: 'Proyecto' },
+    { value: 'presentation', label: 'Exposicion' },
+    { value: 'reading', label: 'Repaso' },
+    { value: 'reminder', label: 'Recordatorio' }
+  ],
+  personal: [
+    { value: 'gym', label: 'Gimnasio' },
+    { value: 'shopping', label: 'Compras' },
+    { value: 'errand', label: 'Tramite' },
+    { value: 'payment', label: 'Pago' },
+    { value: 'appointment', label: 'Cita' },
+    { value: 'reminder', label: 'Recordatorio' },
+    { value: 'personal_goal', label: 'Objetivo' },
+    { value: 'other', label: 'Otro' }
+  ]
+};
+
+function defaultTypeForArea(area: AreaType): ActivityType {
+  return detailTypeOptions[area][0].value;
+}
 
 export function ActivityDetailPage() {
   const { activityId } = useParams();
   const navigate = useNavigate();
   const {
     activities,
+    courses,
+    projects,
     taskStages,
     subtasks,
     notes,
@@ -25,6 +62,7 @@ export function ActivityDetailPage() {
     restartActivity,
     setStatus,
     updateDueDate,
+    updateActivityArea,
     setReviewCheck,
     deleteActivity
   } = useActivityStore();
@@ -34,6 +72,10 @@ export function ActivityDetailPage() {
   const [note, setNote] = useState('');
   const [isEditingDueDate, setIsEditingDueDate] = useState(false);
   const [dueDateDraft, setDueDateDraft] = useState('');
+  const [isEditingArea, setIsEditingArea] = useState(false);
+  const [areaDraft, setAreaDraft] = useState<AreaType>('work');
+  const [typeDraft, setTypeDraft] = useState<ActivityType>('feature');
+  const [groupDraft, setGroupDraft] = useState('');
   const activity = activities.find((item) => item.id === activityId);
 
   if (!activity) {
@@ -64,6 +106,30 @@ export function ActivityDetailPage() {
     setIsEditingDueDate(false);
   }
 
+  function openAreaEditor() {
+    setAreaDraft(selectedActivity.area);
+    setTypeDraft(selectedActivity.type);
+    setGroupDraft(selectedActivity.area === 'work' ? projects.find((project) => project.id === selectedActivity.projectId)?.name ?? '' : selectedActivity.area === 'university' ? courses.find((course) => course.id === selectedActivity.courseId)?.name ?? '' : selectedActivity.personalCategory ?? '');
+    setIsEditingArea(true);
+  }
+
+  function changeArea(area: AreaType) {
+    setAreaDraft(area);
+    setTypeDraft(defaultTypeForArea(area));
+    setGroupDraft('');
+  }
+
+  async function saveAreaChange() {
+    if ((areaDraft === 'work' || areaDraft === 'university') && !groupDraft.trim()) return;
+    await updateActivityArea(selectedActivity.id, {
+      area: areaDraft,
+      type: typeDraft,
+      projectName: areaDraft === 'work' ? groupDraft : undefined,
+      courseName: areaDraft === 'university' ? groupDraft : undefined,
+      personalCategory: areaDraft === 'personal' ? groupDraft : undefined
+    });
+    setIsEditingArea(false);
+  }
   return (
     <div className="mx-auto flex w-full max-w-6xl flex-col gap-5 px-4 py-5 sm:px-6 lg:px-8 lg:py-8">
       <header className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
@@ -86,6 +152,20 @@ export function ActivityDetailPage() {
                 </div>
               </div>
             ) : null}
+            {isEditingArea ? (
+              <div className="mt-3 rounded-md border border-slate-200 bg-slate-50 p-3">
+                <div className="grid gap-3 sm:grid-cols-3">
+                  <label><span className="text-xs font-medium text-slate-500">Modulo</span><select className="mt-1 h-10 w-full rounded-md border border-slate-200 bg-white px-3 text-sm" value={areaDraft} onChange={(event) => changeArea(event.target.value as AreaType)}>{(['work', 'university', 'personal'] as AreaType[]).map((area) => <option key={area} value={area}>{areaLabels[area]}</option>)}</select></label>
+                  <label><span className="text-xs font-medium text-slate-500">Tipo</span><select className="mt-1 h-10 w-full rounded-md border border-slate-200 bg-white px-3 text-sm" value={typeDraft} onChange={(event) => setTypeDraft(event.target.value as ActivityType)}>{detailTypeOptions[areaDraft].map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}</select></label>
+                  <label><span className="text-xs font-medium text-slate-500">{areaDraft === 'work' ? 'Proyecto' : areaDraft === 'university' ? 'Curso' : 'Categoria'}</span><input className="mt-1 h-10 w-full rounded-md border border-slate-200 bg-white px-3 text-sm" placeholder={areaDraft === 'work' ? 'Ej. Proyecto web' : areaDraft === 'university' ? 'Ej. Inmunologia' : 'Ej. Salud'} value={groupDraft} onChange={(event) => setGroupDraft(event.target.value)} /></label>
+                </div>
+                {(areaDraft === 'work' || areaDraft === 'university') && !groupDraft.trim() ? <p className="mt-2 text-sm text-amber-700">Indica {areaDraft === 'work' ? 'un proyecto' : 'un curso'} para que la actividad aparezca en su modulo.</p> : null}
+                <div className="mt-3 flex flex-wrap gap-2">
+                  <button className="rounded-md bg-teal-700 px-3 py-2 text-sm font-semibold text-white disabled:bg-slate-300" disabled={(areaDraft === 'work' || areaDraft === 'university') && !groupDraft.trim()} onClick={saveAreaChange}>Guardar modulo</button>
+                  <button className="rounded-md border border-slate-200 bg-white px-3 py-2 text-sm" onClick={() => setIsEditingArea(false)}>Cancelar</button>
+                </div>
+              </div>
+            ) : null}
           </div>
           <div className="flex flex-wrap gap-2"><AreaBadge area={selectedActivity.area} /><PriorityBadge priority={selectedActivity.priority} /><StatusBadge status={selectedActivity.status} /></div>
         </div>
@@ -93,6 +173,7 @@ export function ActivityDetailPage() {
         <div className="mt-4 flex flex-wrap gap-2">
           <button className="inline-flex items-center gap-2 rounded-md border border-slate-200 px-3 py-2 text-sm" onClick={() => restartActivity(selectedActivity.id)}><RotateCcw size={16} />Iniciar</button>
           <button className="rounded-md border border-slate-200 px-3 py-2 text-sm" onClick={() => { setDueDateDraft(selectedActivity.dueDate || ''); setIsEditingDueDate(true); }}>Editar fecha fin</button>
+          <button className="rounded-md border border-slate-200 px-3 py-2 text-sm" onClick={openAreaEditor}>Cambiar modulo</button>
           <button className="rounded-md border border-violet-200 px-3 py-2 text-sm text-violet-700" onClick={() => setStatus(selectedActivity.id, 'review')}>Pasar a revision</button>
           <button disabled={!canFinish} className="rounded-md bg-emerald-700 px-3 py-2 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:bg-slate-300" onClick={() => setStatus(selectedActivity.id, 'completed')}>Finalizar actividad</button>
           <button className="rounded-md border border-slate-200 px-3 py-2 text-sm" onClick={() => setStatus(selectedActivity.id, 'archived')}>Archivar</button>

@@ -1,5 +1,5 @@
 import { db } from '../database/db';
-import type { Activity, ActivityDraft, ActivityHistory, Course, Note, Project, ResourceLink, Settings, Subtask, TaskFlowBackup, TaskStage } from '../types/taskflow';
+import type { Activity, ActivityDraft, ActivityHistory, ActivityType, AreaType, Course, Note, Project, ResourceLink, Settings, Subtask, TaskFlowBackup, TaskStage } from '../types/taskflow';
 import { createId, nowIso } from '../utils/ids';
 
 export interface TaskFlowData { courses: Course[]; projects: Project[]; activities: Activity[]; taskStages: TaskStage[]; subtasks: Subtask[]; notes: Note[]; activityHistory: ActivityHistory[]; resourceLinks: ResourceLink[]; settings: Settings[]; }
@@ -80,6 +80,29 @@ export const taskFlowRepository = {
   async updateDueDate(activityId: string, dueDate?: string) {
     await db.activities.update(activityId, { dueDate: dueDate || undefined, updatedAt: nowIso() });
     await addHistory(activityId, 'date_changed', dueDate ? `Extendiste la fecha fin hasta ${dueDate}` : 'Quitaste la fecha fin');
+  },
+
+  async updateActivityArea(activityId: string, payload: { area: AreaType; type: ActivityType; courseName?: string; projectName?: string; personalCategory?: string }) {
+    const timestamp = nowIso();
+    const courseId = payload.area === 'university' ? await findOrCreateCourse(payload.courseName) : undefined;
+    const projectId = payload.area === 'work' ? await findOrCreateProject(payload.projectName) : undefined;
+    await db.transaction('rw', [db.activities, db.activityHistory], async () => {
+      await db.activities.where('id').equals(activityId).modify((activity) => {
+        activity.area = payload.area;
+        activity.type = payload.type;
+        activity.updatedAt = timestamp;
+
+        if (payload.area === 'university') activity.courseId = courseId;
+        else delete activity.courseId;
+
+        if (payload.area === 'work') activity.projectId = projectId;
+        else delete activity.projectId;
+
+        if (payload.area === 'personal') activity.personalCategory = payload.personalCategory?.trim();
+        else delete activity.personalCategory;
+      });
+      await addHistory(activityId, 'area_changed', `Cambiaste la actividad al modulo ${payload.area}`);
+    });
   },
   async toggleSubtask(subtask: Subtask) {
     const isCompleted = !subtask.isCompleted;
@@ -189,13 +212,13 @@ export const taskFlowRepository = {
   },
 
   async deleteProject(projectId: string) {
-    const relatedActivities = await db.activities.where('projectId').equals(projectId).count();
+    const relatedActivities = await db.activities.where('projectId').equals(projectId).and((activity) => activity.area === 'work').count();
     if (relatedActivities > 0) throw new Error('No puedes eliminar un proyecto con tareas asociadas. Elimina primero sus tareas.');
     await db.projects.delete(projectId);
   },
 
   async deleteCourse(courseId: string) {
-    const relatedActivities = await db.activities.where('courseId').equals(courseId).count();
+    const relatedActivities = await db.activities.where('courseId').equals(courseId).and((activity) => activity.area === 'university').count();
     if (relatedActivities > 0) throw new Error('No puedes eliminar un curso con actividades asociadas. Elimina primero sus actividades.');
     await db.courses.delete(courseId);
   }
